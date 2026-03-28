@@ -14,31 +14,33 @@ format:
 
 ## Research Questions
 ### (RQ.1)
-Does the feels-like temperature of a day affect the # of rentals after accounting for other weather conditions (e.g. precipitation, humidity, and windspeed)?
+Does the temperature of a day affect the # of rentals after accounting for other weather conditions (e.g. precipitation, humidity, and wind speed) and user type?
 
 ### (RQ.2)
 Do weather conditions affect registered vs. casual users differently?
 
 ## Model
 
-The response variable of our model will be the number of rentals each hour. Denoting the number of bike rentals at hour $i$ to be $Y_i$ (or `cnt` in the dataset), we assume
+The response variable of our model will be the number of rentals each hour (both for casual users, and registered users). Denoting the number of bike rentals at hour $i$ to be $Y_i$ (one of `casual` or `registered` in the dataset), we assume
 $$
 Y_i \sim \text{Poisson}(\lambda_i) \\
 $$
 
 with link function
 $$
-\log(\lambda_i) = X\beta
+\log(\lambda_i) = X^T\beta
 $$
 
-for $X \in \mathbb{R}^{n \times (p+1)}$ and $\beta \in \mathbb{R}^{p + 1}$, where $n$ is the number of samples in the hour dataset, and $p$ is the number of predictors we're including, or the number of rows in the [Predictors](#predictors) section.
+for $X \in \mathbb{R}^{(p+1) \times n}$ and $\beta \in \mathbb{R}^{p + 1}$, where $n$ is the number of samples in the hour dataset times two (with samples of registered and casual rentals at each hour), and $p$ is the number of predictors we're including, or the number of rows in the [Predictors](#predictors) section. Then, we would have an intercept term $\beta_0$ with $X_{i, 1} = 1$.
 
 ## Predictors
 
 Our model will include:
 
-Predictor    | Reason
--------------|-----------------------------------------------------
-`temp` | To control for the effect of temperature on the number of bike rentals
-`windspeed` 
-`weathersit` | To examine the effect of the amount of precipitation
+| Predictor | Reason |
+| -- | ----------- |
+| `temp`, `windspeed`, `humidity` | To control for the effect of the different aspects of the weather on the number of bike rentals |
+| `weathersit` | To examine the effect of the amount of precipitation on the number of bike rentals, after accounting for other parts of the weather |
+| `userType` | The user type for the count (whether the count was of registered or casual users). Included to account for the effect of being a registered user by itself on rentals |
+| Interaction between `userType` and all other predictors | To see how registered users are affected by each weather effect compared to casual users |
+
