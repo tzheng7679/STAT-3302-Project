@@ -11,8 +11,10 @@ format:
 ---
 
 ## Project Title
+Effect of Weather, Day of Season, and Registration Status on Bike Rentals 
 
 ## Research Questions
+
 ### (RQ.1)
 Does the temperature of a day affect the number of Bike Rentals after accounting for other weather conditions (e.g. precipitation, humidity, and wind speed), user type and type of day (workday/not)?
 
@@ -23,10 +25,10 @@ Does the fact that it is a workday (not a weekend/holiday) affect the number of 
 Do weather conditions affect the number of Bike Rentals among registered users vs. casual users?
 
 ### (RQ.4)
-Does the fact that it is a workday(or not) affect the number of Bike Rentals among registered users vs. casual users
+Does the fact that it is a workday (or not) affect the number of Bike Rentals among registered users vs. casual users differently?
 
-
-
+### (RQ.5)
+Do the number of rentals change through a season (e.g. do rentals taper of as a season progresses)?
 
 ## Model
 
@@ -50,7 +52,7 @@ Our model will include:
 | ----- | ----------- |
 | `temp`, `windspeed`, `humidity` | To control for the effect of the different aspects of the weather on the number of bike rentals |
 | `weathersit` | To examine the effect of the amount of precipitation on the number of bike rentals, after accounting for other parts of the weather |
-| `userType` | The user type for the count (whether the count was of registered or casual users). Included to account for the effect of being a registered user by itself on rentals |
+| User Type | The user type for the count (whether the count was of registered or casual users). This will be taken from the `casual` and `registered` columns of the dataset. Included to account for the effect of being a registered user by itself on rentals |
 | `workday`| Helps identify a workday and accounts for the effect of that fact on the number of rentals for the given hour |
-| Interaction between `userType` and all other predictors | To see how registered users are affected by each weather effect and workday compared to casual users |
-
+| Day of season | The day of the season (e.g. 0 for the first day of Spring, 1 for the second, etc...). Helps to answer [RQ.5](#rq.5) by showing if there is a significant linear relation between how long it's been a season and the number of rentals. |
+| Interaction between `userType` and all other predictors | To see how registered users are affected by each other predictor compared to casual users |
