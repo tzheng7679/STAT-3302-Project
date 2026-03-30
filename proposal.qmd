@@ -23,7 +23,7 @@ Does the fact that it is a workday (not a weekend/holiday) affect the number of 
 Do weather conditions affect the number of Bike Rentals among registered users vs. casual users?
 
 ### (RQ.4)
-Does the fact that it is a workday(or not) affect the number of Bike Rentals among registered users vs. casual users?
+Does the fact that it is a workday(or not) affect the number of Bike Rentals among registered users vs. casual users
 
 
 
@@ -51,6 +51,6 @@ Our model will include:
 | `temp`, `windspeed`, `humidity` | To control for the effect of the different aspects of the weather on the number of bike rentals |
 | `weathersit` | To examine the effect of the amount of precipitation on the number of bike rentals, after accounting for other parts of the weather |
 | `userType` | The user type for the count (whether the count was of registered or casual users). Included to account for the effect of being a registered user by itself on rentals |
-| `workday`| Helps identify a workday and accounts for the effect of that fact on the number of rentals for the given hour|
+| `workday`| Helps identify a workday and accounts for the effect of that fact on the number of rentals for the given hour |
 | Interaction between `userType` and all other predictors | To see how registered users are affected by each weather effect and workday compared to casual users |
 
