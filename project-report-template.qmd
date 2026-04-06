@@ -1,0 +1,162 @@
+---
+title: Effect of Weather, Day of Season, and Registration Status on Bike Rentals 
+subtitle: "STAT 3302: Statistical Modeling for Discovery II"
+author:
+- Collin Farrell
+- Paarth Mahajan
+- Aayush Sharma
+- Tony Zheng
+group: "Group A (Bike Sharing)"
+date: today
+# Choose one format and delete the other:
+format:
+  html:
+    embed-resources: true
+  pdf:
+    geometry:
+      - margin=1in
+    fontsize: 11pt
+execute:
+  echo: false
+  warning: false
+  message: false
+  autodep: true
+---
+
+```{r}
+#| label: setup
+# Load packages and data here
+library(tidyverse)
+
+bike = read_csv("data/hour.csv")
+```
+
+## Abstract
+
+<!-- 2-3 sentence summary of your question, method, and key finding. -->
+
+## Introduction
+
+<!-- Introduce the problem and your research question(s). Why is this
+question interesting or important? -->
+
+Bike rentals rentals vary from day-to-day depending on various weather, temporal, and user conditions. By analyzing which conditions have the greatest effect on the estimated number of rentals, we can find what conditions have an impact or don't, and how these impacts interact with each other. As such, we ask the following questions:
+
+#### (RQ.1)
+Does the temperature of a day affect the number of Bike Rentals after accounting for other weather conditions (e.g. precipitation, humidity, and wind speed), user type and type of day (workday/not)?
+
+#### (RQ.2)
+Does the fact that it is a workday (not a weekend/holiday) affect the number of Bike Rentals after accounting for weather conditions (e.g. precipitation, humidity, temperature, and wind speed), and user type?
+
+#### (RQ.3)
+Do weather conditions affect the number of Bike Rentals among registered users vs. casual users?
+
+#### (RQ.4)
+Does the fact that it is a workday (or not) affect the number of Bike Rentals among registered users vs. casual users differently?
+
+#### (RQ.5)
+Do the number of rentals change through a season (e.g. do rentals taper of as a season progresses)?
+
+These questions address individual bike rental conditions and the way user they interact between each other (if one condition occuring cancels out another or strengthens its effect).
+
+## Data
+
+<!-- Describe the dataset: source, unit of observation, sample size,
+response variable, and key predictors. Include relevant summary
+statistics or exploratory plots. -->
+
+## Methods
+
+<!-- Describe the model you fit: response variable, distribution, link
+function, and predictors. Justify your modeling choices (e.g., why you
+included certain predictors, interactions, or polynomial terms). -->
+
+### Model
+
+We fit model
+$$
+Y_i \sim \text{Poisson}(\lambda_i)
+$$
+
+with link function
+$$
+\log(\lambda_i) = X^T\beta
+$$
+
+for $X \in \mathbb{R}^{(p+1) \times n}$ and $\beta \in \mathbb{R}^{p + 1}$, where $n$ is the number of samples in the hour dataset times two (with samples of registered and casual rentals at each hour), and $p$ is the number of predictors we're including, or the number of rows in the [Predictors](#predictors) section. Then, we would have an intercept term $\beta_0$ with $X_{i, 1} = 1$.
+
+### Predictors
+
+Our model will include:
+
+| Predictor | Description | Reason |
+| ----- | ------ | ----------- |
+| `temp` | The temperature of a day in ($^\circ F$) | To control for the effect of the different aspects of the weather on the number of bike rentals |
+| `windspeed` | The normalized wind speed from 0-67 (unitless) |
+| `hum` | The normalized humidity from 0-100 (unitless) |
+| `weathersit` | Factor representing the amount of precipitation/cloud cover. In $\{1, 2, 3, 4\}$, where <br> **1:** Clear, Few clouds, Partly cloudy, Partly cloudy <br> **2:** Mist + Cloudy, Mist + Broken clouds, Mist + Few clouds, Mist <br> **3:** Light Snow, Light Rain + Thunderstorm + Scattered clouds, Light Rain + Scattered clouds <br> **4:** Heavy Rain + Ice Pallets + Thunderstorm + Mist, Snow + Fog | To examine the effect of the amount of precipitation on the number of bike rentals, after accounting for other parts of the weather |
+| User Type | Indicator of if the number of rentals is taken from the the `casual` or `registered` columns of the dataset (0 if `casual`, 1 if `registered`) | Included to account for the effect of being a registered user by itself on rentals |
+| `workingday`| Indicator of if day was a workday or not (1 if workday, 0 if not) | Helps identify a workday and accounts for the effect of that fact on the number of rentals for the given hour |
+| Day of season | The day of the season (e.g. 0 for the first day of Spring, 1 for the second, etc..., then 0 for the first day of Fall, 1 for the second, etc...). | Helps to answer [RQ.5](#rq.5) by showing if there is a significant linear relation between how long it's been a season and the number of rentals. |
+| Interaction between `userType` and all other predictors | | To see how registered users are affected by each other predictor compared to casual users |
+
+We also use `stepAIC` to determine if our model would have a better fit by ablating any predictors.
+
+## Results
+
+<!-- Present the fitted model, interpret key coefficients, and report
+any hypothesis tests or confidence intervals. Use tables and figures
+to support your findings. -->
+
+```{r}
+# data manipulation
+
+# create UserType column
+bike_transformed = bike %>% 
+    pivot_longer(
+        c("casual", "registered"),
+        names_to = "user_type",
+        values_to = "rentals"
+    ) %>%
+    group_by(yr, consecutive_id(season)) %>%
+    mutate(
+        day_of_season = as.numeric(dteday - min(dteday)),
+        weathersit = factor(weathersit)
+    )
+```
+
+We get fitted model:
+```{r}
+model = glm(rentals ~ (temp + windspeed + hum + weathersit + workingday + day_of_season):user_type, bike_transformed, family = poisson())
+
+summary(model)
+```
+
+which is the same after `stepAIC`
+```{r}
+MASS::stepAIC(model)
+```
+
+## Diagnostics
+
+<!-- Describe at least one diagnostic check you performed (e.g.,
+residual plots, goodness-of-fit tests). What did it reveal about
+your model? -->
+
+## Discussion
+
+<!-- Discuss your findings in context. What are the limitations of
+your analysis? What would you do differently with more time or data? -->
+
+## Conclusion
+
+<!-- Briefly summarize your main findings and their implications. -->
+
+## References
+
+<!-- Cite the data source and any articles or resources you used. -->
+
+## Appendix {.appendix}
+
+<!-- Optional: include additional code, tables, or figures here.
+This section does not count toward the page limit. -->
