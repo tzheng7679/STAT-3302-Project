@@ -131,7 +131,8 @@ We get fitted model:
 ```{r}
 model = glm(rentals ~ (temp + windspeed + hum + weathersit + workingday + day_of_season + season)*user_type, bike_transformed, family = poisson())
 
-summary(model)
+s = summary(model)
+s
 ```
 
 which is the same after `stepAIC` starting from the full model
@@ -155,6 +156,37 @@ your model? -->
 
 <!-- Discuss your findings in context. What are the limitations of
 your analysis? What would you do differently with more time or data? -->
+
+### (RQ.5)
+
+Our estimated `day_of_season` coefficients were statistically significant, since `day_of_season` and `day_of_season:user_typeregistered` had individual p-values of
+```{r}
+usertype_coefs = c("day_of_season", "day_of_season:user_typeregistered")
+s$coefficients[usertype_coefs, "Pr(>|z|)"]
+```
+
+and a p-value when added together
+```{r}
+no_day_of_season_model = glm(rentals ~ (temp + windspeed + hum + weathersit + workingday + season)*user_type, bike_transformed, family = poisson())
+
+anova(no_day_of_season_model, model)[2, "Pr(>Chi)"]
+```
+
+with individual values
+```{r}
+coef(model)[usertype_coefs]
+```
+
+These indicate that there was a significant positive relationship between the day of the season and bike rentals; in other words, for casual users, bike rentals increased as the season went along, and to a slightly greater extent for registered user. Specifically, it is estimated that for every day that passed in a season, the estimated mean number of casual bike rentals in an hour increased by a factor of 
+```{r}
+coef(model)[["day_of_season"]] |> exp()
+```
+and for registered users
+```{r}
+coef(model)[usertype_coefs] |> sum() |> exp()
+```
+
+Overall, that means that there was a significant association between how long its been a season and the mean number of hourly bike rentals.
 
 ## Conclusion
 
