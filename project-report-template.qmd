@@ -80,10 +80,10 @@ $$
 
 with link function
 $$
-\log(\lambda_i) = X^T\beta
+\log(\lambda_i) = X_i^T\beta
 $$
 
-for $X \in \mathbb{R}^{(p+1) \times n}$ and $\beta \in \mathbb{R}^{p + 1}$, where $n$ is the number of samples in the hour dataset times two (with samples of registered and casual rentals at each hour), and $p$ is the number of predictors we're including, or the number of rows in the [Predictors](#predictors) section. Then, we would have an intercept term $\beta_0$ with $X_{i, 1} = 1$.
+Then, $X_i \in \mathbb{R}^{(p+1) \times n}$ and $\beta \in \mathbb{R}^{p + 1}$, where $n$ is the number of samples in the hour dataset times two (with samples of registered and casual rentals at each hour), $p$ is the number of predictors we're including, or the number of rows in the [Predictors](#predictors) section, and $i \in {1, 2, \dots, n}$. Then, we would have an intercept term $\beta_0$ with $X_{i, 1} = 1$. Additionally, $Y_i$ is the number of bike rentals in an hour for the $i$-th observation, with two $Y_i$ existing for each hour (one for casual users, and one for registered users).
 
 ### Predictors
 
