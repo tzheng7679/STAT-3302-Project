@@ -2,7 +2,7 @@
 title: Effect of Weather, Day of Season, and Registration Status on Bike Rentals 
 subtitle: "STAT 3302: Statistical Modeling for Discovery II"
 author:
-- Collin Farrell
+- Colin Farrell
 - Paarth Mahajan
 - Aayush Sharma
 - Tony Zheng
@@ -156,6 +156,49 @@ your model? -->
 
 <!-- Discuss your findings in context. What are the limitations of
 your analysis? What would you do differently with more time or data? -->
+
+### (RQ.1)
+
+The estimated coefficients for `temp` are seen to be statistically significant, as the individual p-values for `temp` and `temp:user_typeregistered` are given by:
+```{r}
+temp_usertype_coefs <- c("temp", "temp:user_typeregistered")
+s$coefficients[temp_usertype_coefs, "Pr(>|z|)"]
+```
+
+The individual values of the coefficients are 
+```{r}
+coef(model)[temp_usertype_coefs]
+```
+
+meaning for casual users, a one degree increase in temperature results in an estimated multiplicative increase in mean bike use by
+```{r}
+coef(model)[["temp"]] |> exp()
+```
+
+and, for casual users, a smaller yet significant estimated mean increase of
+```{r}
+coef(model)[temp_usertype_coefs] |> sum() |> exp()
+```
+
+
+### (RQ.2)
+
+For the question of whether or not it is a workday having an effect on the average number of rides, the coefficient is also seen as statistically significant, as the associated p-value for `workingday` is also
+```{r}
+s$coefficients["workingday", "Pr(>|z|)"]
+```
+The coefficient value for the `workingday` predictor is
+```{r}
+coef(model)["workingday"]
+```
+
+Therefore, the estimated multiplicative change in mean number of riders when it is a working day compared to a non-working day, i.e., a holiday or weekend, is given by
+```{r}
+coef(model)[["workingday"]] |> exp()
+```
+
+which means that approximately 58% less average rides are estimated on a workday compared to a non-workday.
+
 
 ### (RQ.5)
 
