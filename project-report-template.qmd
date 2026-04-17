@@ -42,7 +42,7 @@ bike = read_csv("data/hour.csv")
 <!-- Introduce the problem and your research question(s). Why is this
 question interesting or important? -->
 
-Bike rentals rentals vary from day-to-day depending on various weather, temporal, and user conditions. By analyzing which conditions have the greatest effect on the estimated number of rentals, we can find what conditions have an impact or don't, and how these impacts interact with each other. As such, we ask the following questions:
+Bike rentals vary from day-to-day depending on various weather, temporal, and user conditions. By analyzing which conditions have the greatest effect on the estimated number of rentals, we can find what conditions have an impact or don't, and how these impacts interact with each other. As such, we ask the following questions:
 
 #### (RQ.1)
 Does the temperature of a day affect the number of Bike Rentals after accounting for other weather conditions (e.g. precipitation, humidity, and wind speed), user type and type of day (workday/not)?
@@ -59,7 +59,7 @@ Does the fact that it is a workday (or not) affect the number of Bike Rentals am
 #### (RQ.5)
 Do the number of rentals change through a season (e.g. do rentals taper of as a season progresses)?
 
-These questions address individual bike rental conditions and the way user they interact between each other (if one condition occuring cancels out another or strengthens its effect).
+These questions address individual bike rental conditions and the way user they interact between each other (if one condition occurring cancels out another or strengthens its effect).
 
 ## Data
 
@@ -97,7 +97,7 @@ Our model will include:
 | `windspeed` | The normalized wind speed from 0-67 (unitless) |
 | `hum` | The normalized humidity from 0-100 (unitless) |
 | `weathersit` | Factor representing the amount of precipitation/cloud cover. In $\{1, 2, 3, 4\}$, where <br> **1:** Clear, Few clouds, Partly cloudy, Partly cloudy <br> **2:** Mist + Cloudy, Mist + Broken clouds, Mist + Few clouds, Mist <br> **3:** Light Snow, Light Rain + Thunderstorm + Scattered clouds, Light Rain + Scattered clouds <br> **4:** Heavy Rain + Ice Pallets + Thunderstorm + Mist, Snow + Fog | To examine the effect of the amount of precipitation on the number of bike rentals, after accounting for other parts of the weather |
-| User Type | Indicator of if the number of rentals is taken from the the `casual` or `registered` columns of the dataset (0 if `casual`, 1 if `registered`) | Included to account for the effect of being a registered user by itself on rentals |
+| User Type | Indicator of if the number of rentals is taken from the `casual` or `registered` columns of the dataset (0 if `casual`, 1 if `registered`) | Included to account for the effect of being a registered user by itself on rentals |
 | `season` | Indicator for what season it is. In the data, is an integer from 1-4, where 1 is Spring, 2 Summer, 3 Fall, and 4 Winter. For our model, we transform it into categorical data where `Spr` is for Spring, `Sum` is for Summer, `Aut` is for Fall, and `Win` is for Winter | Included to account for the effect of the season on bike rentals |
 | `workingday`| Indicator of if day was a workday or not (1 if workday, 0 if not) | Helps identify a workday and accounts for the effect of that fact on the number of rentals for the given hour |
 | Day of season | The day of the season (e.g. 0 for the first day of Spring, 1 for the second, etc..., then 0 for the first day of Fall, 1 for the second, etc...). | Helps to answer [RQ.5](#rq.5) by showing if there is a significant linear relation between how long it's been a season and the number of rentals. |

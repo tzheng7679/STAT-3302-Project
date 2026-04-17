@@ -1,0 +1,355 @@
+---
+title: Effects of Weather, Seasons, and Registration on Bike Rentals 
+subtitle: "STAT 3302: Statistical Modeling for Discovery II"
+author:
+- Colin Farrell
+- Paarth Mahajan
+- Aayush Sharma
+- Tony Zheng
+group: "Group A (Bike Sharing)"
+# Choose one format and delete the other:
+format:
+  revealjs:
+    embed-resources: true
+execute:
+  echo: false
+  warning: false
+  message: false
+  cache: true
+  autodep: true
+---
+
+```{r}
+#| label: setup
+# Load packages and data here
+library(tidyverse)
+library(ggthemes) # for theme_clean
+
+bike = read_csv("data/hour.csv")
+```
+
+## Abstract
+
+<!-- 2-3 sentence summary of your question, method, and key finding. -->
+
+## Introduction
+
+<!-- Introduce the problem and your research question(s). Why is this
+question interesting or important? -->
+
+Bike rentals vary from day-to-day depending on various weather, temporal, and user conditions. By analyzing which conditions have the greatest effect on the estimated number of rentals, we can find what conditions have an impact or don't, and how these impacts interact with each other. As such, we ask the following questions:
+
+## (RQ.1)
+Does the temperature of a day affect the number of Bike Rentals after accounting for other weather conditions (e.g. precipitation, humidity, and wind speed), user type and type of day (workday/not)?
+
+## (RQ.2)
+Does the fact that it is a workday (not a weekend/holiday) affect the number of Bike Rentals after accounting for weather conditions (e.g. precipitation, humidity, temperature, and wind speed), and user type?
+
+## (RQ.3)
+Do weather conditions affect the number of Bike Rentals among registered users vs. casual users?
+
+## (RQ.4)
+Does the fact that it is a workday (or not) affect the number of Bike Rentals among registered users vs. casual users differently?
+
+## (RQ.5)
+Do the number of rentals change through a season (e.g. do rentals taper of as a season progresses)?
+
+These questions address individual bike rental conditions and the way user they interact between each other (if one condition occurring cancels out another or strengthens its effect).
+
+
+
+# Methods
+
+<!-- Describe the model you fit: response variable, distribution, link
+function, and predictors. Justify your modeling choices (e.g., why you
+included certain predictors, interactions, or polynomial terms). -->
+
+## Model {auto-animate="true"}
+
+We fit model
+$$
+Y_i \sim \text{Poisson}(\lambda_i)
+$$
+
+where $Y_i$ is the observed number of bike rentals for the hour of the $i$-th observation. For each hour, there are two $Y$:
+
+- One for casual users
+- One for registered users
+
+And we have link function
+
+$$
+\log(\lambda_i) = X_i^T\beta
+$$
+
+## Model {auto-animate="true"}
+
+$$
+\log(\lambda_i) = X_i^T\beta
+$$
+
+Then, $X_i \in \mathbb{R}^{(p+1) \times n}$ and $\beta \in \mathbb{R}^{p + 1}$, for $i \in \{1, 2, \dots, n\}$
+
+::: {.incremental}
+- $n$ is the number of samples in the hour dataset times two (one for each registered count, one for casual)
+- $p$ is the total number of predictors we're including, with intercept term $\beta_0 = \beta_{0, i}$ for $\forall i$
+- $X_{i, 1} = 1$ for $\forall i$ 
+- and all other $X_{i, j}$ correspond to the value $j$-th predictor for observation $i$
+:::
+
+## Predictors {.smaller}
+
+Our model includes:
+
+| Predictor | Description | Reason |
+| ----- | ------ | ------ |
+| `temp` | The temperature of a day in ($^\circ F$) | To control for the effect of the different aspects of the weather on the number of bike rentals |
+| `windspeed` | The normalized wind speed from 0-67 (unitless) |
+| `hum` | The normalized humidity from 0-100 (unitless) |
+
+## Predictors {.smaller}
+
+| Predictor | Description | Reason |
+| ----- | ------ | ------ |
+| `workingday`| Indicator of if day was a workday or not (1 if workday, 0 if not) | Helps identify a workday and accounts for the effect of that fact on the number of rentals for the given hour |
+| User Type | Indicator of if the number of rentals is taken from the `casual` or `registered` columns of the dataset (0 if `casual`, 1 if `registered`) | Included to account for the effect of being a registered user by itself on rentals |
+
+## Predictors Cont.
+
+`weathersit`: Factor representing the amount of precipitation/cloud cover. In $\{1, 2, 3, 4\}$, where
+
+**1:** Clear, Few clouds, Partly cloudy, Partly cloudy
+
+**2:** Mist + Cloudy, Mist + Broken clouds, Mist + Few clouds, Mist
+
+**3:** Light Snow, Light Rain + Thunderstorm + Scattered clouds, Light Rain + Scattered clouds
+
+**4:** Heavy Rain + Ice Pallets + Thunderstorm + Mist, Snow + Fog
+
+It will help to examine the effect of the amount of precipitation on the number of bike rentals, after accounting for other parts of the weather
+
+
+## Predictors Cont.
+
+`season`: Indicator for what season it is. In the data, is an integer from 1-4, where
+
+**1** is Spring, **2** Summer, **3** Fall, and **4** Winter. For our model, we transform it into an unordered factor, where `Spr` is for Spring, `Sum` is for Summer, `Aut` is for Fall, and `Win` is for Winter
+
+This is included to account for the effect of the season on bike rentals
+
+## Predictors Cont.
+**Day of season**: The day of the season (e.g. 0 for the first day of Spring, 1 for the second, etc..., then 0 for the first day of Fall, 1 for the second, etc...). 
+
+Helps to answer [RQ.5](#rq.5) by showing if there is a significant linear relation between how long it's been a season and the number of rentals.
+
+## Predictors Cont.
+
+Interaction between `userType` and all other predictors
+
+This helps us see how registered users are affected by each other predictor compared to casual users
+
+
+## Methodology
+
+We also use `stepAIC` (bidirectional stepwise model selection using AIC) to determine if our model would have a better fit by ablating any predictors.
+
+## Results
+
+<!-- Present the fitted model, interpret key coefficients, and report
+any hypothesis tests or confidence intervals. Use tables and figures
+to support your findings. -->
+
+```{r}
+# data manipulation
+
+# create UserType column
+bike_transformed = bike %>% 
+    pivot_longer( # split casual and registered users
+        c("casual", "registered"),
+        names_to = "user_type",
+        values_to = "rentals"
+    ) %>%
+    group_by(yr, consecutive_id(season)) %>%
+    mutate( # create day of season, create factors for weather/season
+        day_of_season = as.numeric(dteday - min(dteday)),
+        weathersit = factor(weathersit),
+        season = factor(season, levels = c(1, 2, 3, 4), labels = c("Spr", "Sum", "Aut", "Win"))
+    )
+```
+
+We get fitted model:
+```{r}
+model = glm(rentals ~ (temp + windspeed + hum + weathersit + workingday + day_of_season + season)*user_type, bike_transformed, family = poisson())
+
+s = summary(model)
+s
+```
+
+Which is the same after running `stepAIC` (backwards + forwards stepwise AIC model selection) starting from the full model and from the null model.
+```{r, eval=FALSE}
+step_model_full = MASS::stepAIC(model, trace = 0, direction = "both")
+step_model_full
+```
+
+```{r, eval=FALSE}
+null_model = glm(rentals ~ 1, bike_transformed, family = poisson())
+step_model_null = MASS::stepAIC(null_model, trace = 0, scope = list(lower = null_model, upper = model, direction = "both"))
+step_model_null
+```
+
+## Diagnostics
+
+<!-- Describe at least one diagnostic check you performed (e.g.,
+residual plots, goodness-of-fit tests). What did it reveal about
+your model? -->
+
+We also generate diagnostic plot for the estimated log rentals against residuals (for both Pearson and deviance residuals)
+
+```{r}
+residuals_data = bike_transformed |>
+    ungroup() |>
+    mutate(
+        fitted.value = fitted.values(model),
+        deviance.residuals = residuals(model, type = "deviance"),
+        pearson.residuals = residuals(model, type = "pearson")
+    )
+
+# pearson residuals plot
+ggplot(residuals_data, aes(x = fitted.value, y = pearson.residuals)) +
+    geom_point(alpha = 0.1) +
+    geom_smooth() +
+    labs(
+        title = "Pearson Residuals for Model",
+        x = "Estimated # of Bike Rentals",
+        y = "Pearson Residual"
+    ) +
+    theme_calc() +
+    facet_wrap(~user_type)
+```
+
+## Diagnostics
+
+We also generate diagnostic plot for the estimated log rentals against residuals (for both Pearson and deviance residuals)
+
+```{r}
+ggplot(residuals_data, aes(x = fitted.value, y = deviance.residuals)) +
+    geom_point(alpha = 0.1) +
+    geom_smooth() +
+    labs(
+        title = "Deviance Residuals for Model",
+        x = "Estimated # of Bike Rentals",
+        y = "Deviance Residual"
+    ) +
+    theme_calc() +
+    facet_wrap(~user_type)
+```
+
+## (RQ.1)
+
+The estimated coefficients for `temp` are seen to be statistically significant, as the individual p-values for `temp` and `temp:user_typeregistered` are given by:
+```{r}
+temp_usertype_coefs <- c("temp", "temp:user_typeregistered")
+s$coefficients[temp_usertype_coefs, "Pr(>|z|)"]
+```
+with combined p-value
+```{r}
+model_no_temp = glm(rentals ~ (windspeed + hum + weathersit + workingday + day_of_season + season)*user_type, bike_transformed, family = poisson())
+anova(model_no_temp, model)[2, "Pr(>Chi)"]
+```
+
+## (RQ.1)
+
+The individual values of the coefficients are 
+```{r}
+coef(model)[temp_usertype_coefs]
+```
+
+meaning for casual users, a one degree increase in temperature results in an estimated multiplicative increase in mean bike use by
+```{r}
+coef(model)[["temp"]] |> exp()
+```
+
+and, for casual users, a smaller yet significant estimated mean increase of
+```{r}
+coef(model)[temp_usertype_coefs] |> sum() |> exp()
+```
+
+
+## (RQ.2)
+
+Workdays also had an effect on the average number of rides, as the coefficient is statistically significant with associated p-value
+```{r}
+s$coefficients["workingday", "Pr(>|z|)"]
+```
+
+and the model is statistically significant compared to the model without both workday coefficients, having p-value on the two predictors
+```{r}
+model_no_workingday = glm(rentals ~ (temp + windspeed + hum + weathersit + day_of_season + season)*user_type, bike_transformed, family = poisson())
+
+anova(model_no_workingday, model)[2, "Pr(>Chi)"]
+```
+
+## (RQ.2)
+
+The coefficient value for the `workingday` predictor is
+```{r}
+coef(model)["workingday"]
+```
+
+Therefore, the estimated multiplicative change in mean number of riders when it is a working day compared to a non-working day, i.e., a holiday or weekend, is given by
+```{r}
+coef(model)[["workingday"]] |> exp()
+```
+
+which means that approximately 58% less average rides are estimated on a workday compared to a non-workday.
+
+## (RQ.5)
+
+Our estimated `day_of_season` coefficients were statistically significant, since `day_of_season` and `day_of_season:user_typeregistered` had individual p-values of
+```{r}
+usertype_coefs = c("day_of_season", "day_of_season:user_typeregistered")
+s$coefficients[usertype_coefs, "Pr(>|z|)"]
+```
+
+and a p-value when added together
+```{r}
+no_day_of_season_model = glm(rentals ~ (temp + windspeed + hum + weathersit + workingday + season)*user_type, bike_transformed, family = poisson())
+
+anova(no_day_of_season_model, model)[2, "Pr(>Chi)"]
+```
+
+with individual values
+```{r}
+coef(model)[usertype_coefs]
+```
+
+## (RQ.5)
+
+These indicate that there was a significant positive relationship between the day of the season and bike rentals. Specifically, it is estimated that for every day that passed in a season, the estimated mean number of hourly casual bike rentals increased by a factor of 
+```{r}
+coef(model)[["day_of_season"]] |> exp()
+```
+and for registered users
+```{r}
+coef(model)[usertype_coefs] |> sum() |> exp()
+```
+
+## Conclusion
+
+<!-- Briefly summarize your main findings and their implications. -->
+Bike rentals are significantly associated with different climate/weather conditions. They...
+
+::: {.incremental}
+- Significantly increased for higher temperatures
+- Increased for non-working days
+- Increased as a season went along (later parts of a season were associated with more rentals)
+:::
+
+## References
+
+<!-- Cite the data source and any articles or resources you used. -->
+
+## Appendix {.appendix}
+
+<!-- Optional: include additional code, tables, or figures here.
+This section does not count toward the page limit. -->
