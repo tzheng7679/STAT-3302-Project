@@ -42,13 +42,13 @@ Bike rentals vary from day-to-day depending on various weather, temporal, and us
 
 ## Research Questions
 
-1. Does the fact that it is a workday (not a weekend/holiday) affect the number of Bike Rentals after accounting for weather conditions (e.g. precipitation, humidity, temperature, and wind speed), and user type?
+1. Does the fact that it is a workday (not a weekend/holiday) affect the number of Bike Rentals?
 
 2. Do weather conditions affect the number of Bike Rentals among registered users vs. casual users?
 
 3. Does the fact that it is a workday (or not) affect the number of Bike Rentals among registered users vs. casual users differently?
 
-4. Do the number of rentals change through a season (e.g. do rentals taper of as a season progresses)?
+4. Do the number of rentals change through a season (e.g. do rentals taper off as a season progresses)?
 
 
 # Methods
@@ -91,12 +91,14 @@ Then, $X_i \in \mathbb{R}^{(p+1) \times n}$ and $\beta \in \mathbb{R}^{p + 1}$, 
 - `temp`
 - `windspeed`
 - `hum`
-- `weathersit`
-- User Type - Indicator of if the number of rentals is taken from the `casual` or `registered` columns of the dataset (0 if `casual`, 1 if `registered`)
+- `weathersit` - Precipitation & cloud cover
 - `season`
 - `workingday`
-- Day of season - The day of the season (e.g. 0 for the first day of Spring, 1 for the second, etc..., then 0 for the first day of Fall, 1 for the second, etc...)
-- Interaction between `userType` and all other predictors
+- **User Type**
+    - Indicator of if the number of rentals is taken from the `casual` or `registered` columns of the dataset (0 if `casual`, 1 if `registered`)
+- **Interaction between `userType` and all other predictors**
+- **Day of season** 
+    - The day of the season (e.g. 0 for the first day of Spring, 1 for the second, etc..., then 0 for the first day of Fall, 1 for the second, etc...)
 
 ## Results
 
@@ -181,37 +183,6 @@ ggplot(residuals_data, aes(x = fitted.value, y = deviance.residuals)) +
 
 ## (RQ.1)
 
-The estimated coefficients for `temp` are seen to be statistically significant, as the individual p-values for `temp` and `temp:user_typeregistered` are given by:
-```{r}
-temp_usertype_coefs <- c("temp", "temp:user_typeregistered")
-s$coefficients[temp_usertype_coefs, "Pr(>|z|)"]
-```
-with combined p-value
-```{r}
-model_no_temp = glm(rentals ~ (windspeed + hum + weathersit + workingday + day_of_season + season)*user_type, bike_transformed, family = poisson())
-anova(model_no_temp, model)[2, "Pr(>Chi)"]
-```
-
-## (RQ.1)
-
-The individual values of the coefficients are 
-```{r}
-coef(model)[temp_usertype_coefs]
-```
-
-meaning for casual users, a one degree increase in temperature results in an estimated multiplicative increase in mean bike use by
-```{r}
-coef(model)[["temp"]] |> exp()
-```
-
-and, for casual users, a smaller yet significant estimated mean increase of
-```{r}
-coef(model)[temp_usertype_coefs] |> sum() |> exp()
-```
-
-
-## (RQ.2)
-
 Workdays also had an effect on the average number of rides, as the coefficient is statistically significant with associated p-value
 ```{r}
 s$coefficients["workingday", "Pr(>|z|)"]
@@ -224,7 +195,7 @@ model_no_workingday = glm(rentals ~ (temp + windspeed + hum + weathersit + day_o
 anova(model_no_workingday, model)[2, "Pr(>Chi)"]
 ```
 
-## (RQ.2)
+## (RQ.1)
 
 The coefficient value for the `workingday` predictor is
 ```{r}
@@ -238,27 +209,20 @@ coef(model)[["workingday"]] |> exp()
 
 which means that approximately 58% less average rides are estimated on a workday compared to a non-workday.
 
-## (RQ.3) {auto-animate="true"}
+## (RQ.2)
 
 Weather conditions affect both groups of users, but casual users are substantially more sensitive to weather than registered users. We can look at the corresponding coefficients for casual users vs registered users for each of the weather-related terms. For registered users, this would be the casual user coefficient **plus** the interaction term for registered users:
 
-. . .
+## (RQ.2)
 
-Casual users:
 ```{r}
-coef_names = names(coef(model))
-coef(model)[grepl("^(weathersit\\d|temp|hum|windspeed)$", coef_names)]
+ggplot(bike_transformed, aes(x = temp, y = rentals, color = user_type)) +
+    geom_point(alpha = 0.2) +
+    labs(x = "Normalized Temperature", y = "Rentals", title = "Temperature vs Bike Rentals by User Type") +
+    theme_clean()
 ```
 
-. . .
-
-Registered users
-```{r}
-coef(model)[grepl("^(weathersit\\d|temp|hum|windspeed)$", coef_names)] +
-coef(model)[grepl("^(weathersit\\d|temp|hum|windspeed):user_typeregistered", coef_names)]
-```
-
-## (RQ.3) {auto-animate="true"}
+## (RQ.2)
 
 Casual users:
 ```{r}
@@ -282,7 +246,7 @@ Overall, causal users had strong sensitivity to temperature, humidity, and winds
 :::
 ::::
 
-## (RQ.4) {auto-animate="true"}
+## (RQ.3) {auto-animate="true"}
 
 We want to know if workday status affects the bike rentals of casual and registered users differently.
 
@@ -295,7 +259,7 @@ $$
 log(\lambda_i) = \cdots + \beta_{\text{wd}} \cdot \mathbf{1}[\text{wd}] + \beta_{\text{wd:utr}} \cdot \mathbf{1}[\text{wd}] \cdot \mathbf{1}[\text{utr}] + \beta_{utr} \cdot \mathbf{1}[\text{utr}]
 $$
 
-## (RQ.4) {auto-animate="true"}
+## (RQ.3) {auto-animate="true"}
 
 $$
 log(\lambda_i) = \cdots + \beta_{\text{wd}} \cdot \mathbf{1}[\text{wd}] + \beta_{\text{wd:utr}} \cdot \mathbf{1}[\text{wd}] \cdot \mathbf{1}[\text{utr}] + \beta_{utr} \cdot \mathbf{1}[\text{utr}]
@@ -314,7 +278,7 @@ s$coefficients[coefs, c("Estimate", "Std. Error", "Pr(>|z|)")]
 ```
 
 
-## (RQ.4) {auto-animate="true"}
+## (RQ.3) {auto-animate="true"}
 
 
 The interaction term `wd:utr` is statistically significant since (p < 0.05), suggesting that we enough evidence to reject the idea that the effect of whether it is a working day on Bike Rentals differs by user type considering everything other predictor is held at the same value.
@@ -328,7 +292,7 @@ coefs <- c("workingday", "workingday:user_typeregistered", "user_typeregistered"
 s$coefficients[coefs, c("Estimate", "Std. Error", "Pr(>|z|)")]
 ```
 
-## (RQ.4) {auto-animate="true"}
+## (RQ.3) {auto-animate="true"}
 
 We can confirm this by calculating the difference in Rentals for non-working/working days for different user type:
 
@@ -353,7 +317,7 @@ $$
 \frac{\lambda_{wd,reg}}{\lambda_{nw,reg}} = exp\{ \beta_{wd} + \beta_{wd:utr} \} = 1.313
 $$
 
-## (RQ.4) {auto-animate="true"}
+## (RQ.3) {auto-animate="true"}
 
 $$
 \frac{\lambda_{wd,cas}}{\lambda_{nw,cas}} = exp\{ \beta_{wd}\} = 0.42
@@ -366,7 +330,7 @@ $$
 
 On workdays, casual rentals are estimated to change by a factor of 0.42 while registered rentals change by a factor of 1.313 — these indicate a reversal in the direction of the change in the rate rentals.
 
-## (RQ.4) {auto-animate="true"}
+## (RQ.3) {auto-animate="true"}
 
 We can visualize this difference by plotting the Estimated Hourly Rentals for different types of days for some median weather conditions (to hold those parameters constant)
 
@@ -400,7 +364,7 @@ ggplot(pred_data, aes(x = user_type, y = predicted, fill = factor(workingday,
 ```
 
 
-## (RQ.5)
+## (RQ.4)
 
 Our estimated `day_of_season` coefficients were statistically significant, since `day_of_season` and `day_of_season:user_typeregistered` had individual p-values of
 ```{r}
@@ -420,7 +384,7 @@ with individual values
 coef(model)[usertype_coefs]
 ```
 
-## (RQ.5)
+## (RQ.4)
 
 These indicate that there was a significant positive relationship between the day of the season and bike rentals. Specifically, it is estimated that for every day that passed in a season, the estimated mean number of hourly casual bike rentals increased by a factor of 
 ```{r}
