@@ -303,13 +303,122 @@ coef(model)[["workingday"]] |> exp()
 
 which means that approximately 58% less average rides are estimated on a workday compared to a non-workday.
 
-## (RQ.3)
+## (RQ.4) {auto-animate="true"}
 
-## (RQ.3)
+We want to know if workday status affects the bike rentals of casual and registered users differently.
 
-## (RQ.4)
+In our model, the effect of `workingday` on different users (`user_type`) and the interaction effect is captured by these terms: 
 
-## (RQ.4)
+To keep it concise let's use aliases for the parameter names for our fitted model. Let the main effects `wd = workingday`, `utr = user_typeregistered` and interaction effect `wd:utr = workin gday:user_typeregistered` :
+
+
+$$
+log(\lambda_i) = \cdots + \beta_{\text{wd}} \cdot \mathbf{1}[\text{wd}] + \beta_{\text{wd:utr}} \cdot \mathbf{1}[\text{wd}] \cdot \mathbf{1}[\text{utr}] + \beta_{utr} \cdot \mathbf{1}[\text{utr}]
+$$
+
+## (RQ.4) {auto-animate="true"}
+
+$$
+log(\lambda_i) = \cdots + \beta_{\text{wd}} \cdot \mathbf{1}[\text{wd}] + \beta_{\text{wd:utr}} \cdot \mathbf{1}[\text{wd}] \cdot \mathbf{1}[\text{utr}] + \beta_{utr} \cdot \mathbf{1}[\text{utr}]
+$$
+
+To answer our question we look at the interaction term $\beta_{\text{workingday:registered}}$  which captures this difference. The p-value generated for this interaction effect during model fit:
+
+\
+
+```{r}
+#Get cofficient names
+coefs <- c("workingday", "workingday:user_typeregistered", "user_typeregistered")
+
+#p-values
+s$coefficients[coefs, c("Estimate", "Std. Error", "Pr(>|z|)")]
+```
+
+
+## (RQ.4) {auto-animate="true"}
+
+
+The interaction term `wd:utr` is statistically significant since (p < 0.05), suggesting that we enough evidence to reject the idea the effect of if its working day on Bike Rentals differs by user type considering everything other predictor is held at the same value.
+
+
+```{r}
+#Get cofficient names
+coefs <- c("workingday", "workingday:user_typeregistered", "user_typeregistered")
+
+#p-values
+s$coefficients[coefs, c("Estimate", "Std. Error", "Pr(>|z|)")]
+```
+
+## (RQ.4) {auto-animate="true"}
+
+We can confirm this by calculating the difference in Rentals for non-working/working days for different user type:
+
+```{r}
+#Coeffs
+wday_coefs <- c("workingday", "workingday:user_typeregistered")
+
+# Multiplicative effect on mean rentals
+casual_mult    <- exp(coef(model)[["workingday"]])
+registered_mult <- exp(sum(coef(model)[wday_coefs]))
+
+cat("Casual Multiplicative Difference in Rentals for Workingday:   ", round(casual_mult, 3), "\n")
+cat("Registered Multiplicative Difference in Rentals for Workingday:", round(registered_mult, 3), "\n")
+```
+
+$$
+\frac{\lambda_{wd,cas}}{\lambda_{nw,cas}} = exp\{ \beta_{wd}\} = 0.42
+$$
+
+
+$$
+\frac{\lambda_{wd,reg}}{\lambda_{nw,reg}} = exp\{ \beta_{wd} + \beta_{wd:utr} \} = 1.313
+$$
+
+## (RQ.4) {auto-animate="true"}
+
+$$
+\frac{\lambda_{wd,cas}}{\lambda_{nw,cas}} = exp\{ \beta_{wd}\} = 0.42
+$$
+
+
+$$
+\frac{\lambda_{wd,reg}}{\lambda_{nw,reg}} = exp\{ \beta_{wd} + \beta_{wd:utr} \} = 1.313
+$$
+
+On workdays, casual rentals are estimated to change by a factor of 0.42 while registered rentals change by a factor of 1.313 — these indicate a reversal in the direction of the change in the rate rentals.
+
+## (RQ.4) {auto-animate="true"}
+
+We can visualize this difference by plotting the Estimated Hourly Rentals for different types of days for some median weather conditions (to hold those parameters constant)
+
+```{r}
+# Predicted mean rentals at median weather conditions by user_type × working day
+pred_data <- bike_transformed |>
+  ungroup() |>
+  group_by(user_type, workingday) |>
+  summarise(
+    temp       = median(temp),
+    windspeed  = median(windspeed),
+    hum        = median(hum),
+    weathersit = factor(1, levels = levels(weathersit)),
+    season     = factor("Sum", levels = levels(season)),
+    day_of_season = median(day_of_season),
+    .groups = "drop"
+  ) |>
+  mutate(predicted = predict(model, newdata = pick(everything()), type = "response"))
+
+ggplot(pred_data, aes(x = user_type, y = predicted, fill = factor(workingday,
+       labels = c("Non-Workday", "Workday")))) +
+  geom_col(position = "dodge") +
+  scale_fill_manual(values = c("#619CFF", "#F8766D"), name = "Day Type") +
+  labs(
+    title    = "Estimated Mean Hourly Rentals: Workday vs Non-Workday",
+    subtitle = "At median weather conditions (Summer, weathersit = 1)",
+    x        = "User Type",
+    y        = "Predicted Mean Rentals"
+  ) +
+  theme_calc()
+```
 
 ## (RQ.5)
 
