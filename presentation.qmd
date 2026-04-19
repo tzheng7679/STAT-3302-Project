@@ -303,6 +303,14 @@ coef(model)[["workingday"]] |> exp()
 
 which means that approximately 58% less average rides are estimated on a workday compared to a non-workday.
 
+## (RQ.3)
+
+## (RQ.3)
+
+## (RQ.4)
+
+## (RQ.4)
+
 ## (RQ.5)
 
 Our estimated `day_of_season` coefficients were statistically significant, since `day_of_season` and `day_of_season:user_typeregistered` had individual p-values of
