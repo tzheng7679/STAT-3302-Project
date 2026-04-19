@@ -2474,67 +2474,22 @@ Y_i \sim \text{Poisson}(\lambda_i)
 <li>One for casual users</li>
 <li>One for registered users</li>
 </ul>
-<p>Then, <span class="math inline">\(X_i \in \mathbb{R}^{(p+1) \times n}\)</span> and <span class="math inline">\(\beta \in \mathbb{R}^{p + 1}\)</span>, where - <span class="math inline">\(n\)</span> is the number of samples in the hour dataset times two (one for each registered count, one for casual) - <span class="math inline">\(p\)</span> is the total number of predictors we’re including, with intercept term <span class="math inline">\(\beta_0 = \beta_{0, i}\)</span> for <span class="math inline">\(\forall i\)</span> - <span class="math inline">\(X_{i, 1} = 1\)</span> for <span class="math inline">\(\forall i\)</span> - and all other <span class="math inline">\(X_{i, j}\)</span> correspond to the value <span class="math inline">\(j\)</span>-th predictor for observation <span class="math inline">\(i\)</span> <span class="math inline">\(i \in {1, 2, \dots, n}\)</span>.</p>
+<p>Then, <span class="math inline">\(X_i \in \mathbb{R}^{(p+1) \times n}\)</span> and <span class="math inline">\(\beta \in \mathbb{R}^{p + 1}\)</span>, where - <span class="math inline">\(n\)</span> is the number of samples in the <strong>hour dataset</strong> times two (one for each registered count, one for casual) - <span class="math inline">\(p\)</span> is the total number of predictors we’re including, with intercept term <span class="math inline">\(\beta_0 = \beta_{0, i}\)</span> for <span class="math inline">\(\forall i\)</span> - <span class="math inline">\(X_{i, 1} = 1\)</span> for <span class="math inline">\(\forall i\)</span> - and all other <span class="math inline">\(X_{i, j}\)</span> correspond to the value <span class="math inline">\(j\)</span>-th predictor for observation <span class="math inline">\(i\)</span> <span class="math inline">\(i \in {1, 2, \dots, n}\)</span>.</p>
 </section>
 <section id="predictors" class="level3">
 <h3 class="anchored" data-anchor-id="predictors">Predictors</h3>
 <p>Our model will include:</p>
-<table class="caption-top table">
-<thead>
-<tr class="header">
-<th>Predictor</th>
-<th>Description</th>
-<th>Reason</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td><code>temp</code></td>
-<td>The temperature of a day in (<span class="math inline">\(^\circ F\)</span>)</td>
-<td>To control for the effect of the different aspects of the weather on the number of bike rentals</td>
-</tr>
-<tr class="even">
-<td><code>windspeed</code></td>
-<td>The normalized wind speed from 0-67 (unitless)</td>
-<td></td>
-</tr>
-<tr class="odd">
-<td><code>hum</code></td>
-<td>The normalized humidity from 0-100 (unitless)</td>
-<td></td>
-</tr>
-<tr class="even">
-<td><code>weathersit</code></td>
-<td>Factor representing the amount of precipitation/cloud cover. In <span class="math inline">\(\{1, 2, 3, 4\}\)</span>, where <br> <strong>1:</strong> Clear, Few clouds, Partly cloudy, Partly cloudy <br> <strong>2:</strong> Mist + Cloudy, Mist + Broken clouds, Mist + Few clouds, Mist <br> <strong>3:</strong> Light Snow, Light Rain + Thunderstorm + Scattered clouds, Light Rain + Scattered clouds <br> <strong>4:</strong> Heavy Rain + Ice Pallets + Thunderstorm + Mist, Snow + Fog</td>
-<td>To examine the effect of the amount of precipitation on the number of bike rentals, after accounting for other parts of the weather</td>
-</tr>
-<tr class="odd">
-<td>User Type</td>
-<td>Indicator of if the number of rentals is taken from the <code>casual</code> or <code>registered</code> columns of the dataset (0 if <code>casual</code>, 1 if <code>registered</code>)</td>
-<td>Included to account for the effect of being a registered user by itself on rentals</td>
-</tr>
-<tr class="even">
-<td><code>season</code></td>
-<td>Indicator for what season it is. In the data, is an integer from 1-4, where 1 is Spring, 2 Summer, 3 Fall, and 4 Winter. For our model, we transform it into categorical data where <code>Spr</code> is for Spring, <code>Sum</code> is for Summer, <code>Aut</code> is for Fall, and <code>Win</code> is for Winter</td>
-<td>Included to account for the effect of the season on bike rentals</td>
-</tr>
-<tr class="odd">
-<td><code>workingday</code></td>
-<td>Indicator of if day was a workday or not (1 if workday, 0 if not)</td>
-<td>Helps identify a workday and accounts for the effect of that fact on the number of rentals for the given hour</td>
-</tr>
-<tr class="even">
-<td>Day of season</td>
-<td>The day of the season (e.g. 0 for the first day of Spring, 1 for the second, etc…, then 0 for the first day of Fall, 1 for the second, etc…).</td>
-<td>Helps to answer <a href="#rq.5">RQ.5</a> by showing if there is a significant linear relation between how long it’s been a season and the number of rentals.</td>
-</tr>
-<tr class="odd">
-<td>Interaction between <code>userType</code> and all other predictors</td>
-<td></td>
-<td>To see how registered users are affected by each other predictor compared to casual users</td>
-</tr>
-</tbody>
-</table>
+<ul>
+<li><code>temp</code></li>
+<li><code>windspeed</code></li>
+<li><code>hum</code></li>
+<li><code>weathersit</code></li>
+<li>User Type - Indicator of if the number of rentals is taken from the <code>casual</code> or <code>registered</code> columns of the dataset (0 if <code>casual</code>, 1 if <code>registered</code>)</li>
+<li><code>season</code></li>
+<li><code>workingday</code></li>
+<li>Day of season - The day of the season (e.g. 0 for the first day of Spring, 1 for the second, etc…, then 0 for the first day of Fall, 1 for the second, etc…)</li>
+<li>Interaction between <code>userType</code> and all other predictors</li>
+</ul>
 <p>We also use <code>stepAIC</code> (bidirectional stepwise model selection using AIC) to determine if our model would have a better fit by ablating any predictors.</p>
 </section>
 </section>

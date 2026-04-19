@@ -39,23 +39,16 @@ question interesting or important? -->
 
 Bike rentals vary from day-to-day depending on various weather, temporal, and user conditions. By analyzing which conditions have the greatest effect on the estimated number of rentals, we can find what conditions have an impact or don't, and how these impacts interact with each other. As such, we ask the following questions:
 
-## (RQ.1)
-Does the temperature of a day affect the number of Bike Rentals after accounting for other weather conditions (e.g. precipitation, humidity, and wind speed), user type and type of day (workday/not)?
 
-## (RQ.2)
-Does the fact that it is a workday (not a weekend/holiday) affect the number of Bike Rentals after accounting for weather conditions (e.g. precipitation, humidity, temperature, and wind speed), and user type?
+## Research Questions
 
-## (RQ.3)
-Do weather conditions affect the number of Bike Rentals among registered users vs. casual users?
+1. Does the fact that it is a workday (not a weekend/holiday) affect the number of Bike Rentals after accounting for weather conditions (e.g. precipitation, humidity, temperature, and wind speed), and user type?
 
-## (RQ.4)
-Does the fact that it is a workday (or not) affect the number of Bike Rentals among registered users vs. casual users differently?
+2. Do weather conditions affect the number of Bike Rentals among registered users vs. casual users?
 
-## (RQ.5)
-Do the number of rentals change through a season (e.g. do rentals taper of as a season progresses)?
+3. Does the fact that it is a workday (or not) affect the number of Bike Rentals among registered users vs. casual users differently?
 
-These questions address individual bike rental conditions and the way user they interact between each other (if one condition occurring cancels out another or strengthens its effect).
-
+4. Do the number of rentals change through a season (e.g. do rentals taper of as a season progresses)?
 
 
 # Methods
@@ -82,11 +75,7 @@ $$
 \log(\lambda_i) = X_i^T\beta
 $$
 
-## Model {auto-animate="true"}
-
-$$
-\log(\lambda_i) = X_i^T\beta
-$$
+## Model
 
 Then, $X_i \in \mathbb{R}^{(p+1) \times n}$ and $\beta \in \mathbb{R}^{p + 1}$, for $i \in \{1, 2, \dots, n\}$
 
@@ -99,59 +88,15 @@ Then, $X_i \in \mathbb{R}^{(p+1) \times n}$ and $\beta \in \mathbb{R}^{p + 1}$, 
 
 ## Predictors {.smaller}
 
-Our model includes:
-
-| Predictor | Description | Reason |
-| ----- | ------ | ------ |
-| `temp` | The temperature of a day in ($^\circ F$) | To control for the effect of the different aspects of the weather on the number of bike rentals |
-| `windspeed` | The normalized wind speed from 0-67 (unitless) |
-| `hum` | The normalized humidity from 0-100 (unitless) |
-
-## Predictors {.smaller}
-
-| Predictor | Description | Reason |
-| ----- | ------ | ------ |
-| `workingday`| Indicator of if day was a workday or not (1 if workday, 0 if not) | Helps identify a workday and accounts for the effect of that fact on the number of rentals for the given hour |
-| User Type | Indicator of if the number of rentals is taken from the `casual` or `registered` columns of the dataset (0 if `casual`, 1 if `registered`) | Included to account for the effect of being a registered user by itself on rentals |
-
-## Predictors Cont.
-
-`weathersit`: Factor representing the amount of precipitation/cloud cover. In $\{1, 2, 3, 4\}$, where
-
-**1:** Clear, Few clouds, Partly cloudy, Partly cloudy
-
-**2:** Mist + Cloudy, Mist + Broken clouds, Mist + Few clouds, Mist
-
-**3:** Light Snow, Light Rain + Thunderstorm + Scattered clouds, Light Rain + Scattered clouds
-
-**4:** Heavy Rain + Ice Pallets + Thunderstorm + Mist, Snow + Fog
-
-It will help to examine the effect of the amount of precipitation on the number of bike rentals, after accounting for other parts of the weather
-
-
-## Predictors Cont.
-
-`season`: Indicator for what season it is. In the data, is an integer from 1-4, where
-
-**1** is Spring, **2** Summer, **3** Fall, and **4** Winter. For our model, we transform it into an unordered factor, where `Spr` is for Spring, `Sum` is for Summer, `Aut` is for Fall, and `Win` is for Winter
-
-This is included to account for the effect of the season on bike rentals
-
-## Predictors Cont.
-**Day of season**: The day of the season (e.g. 0 for the first day of Spring, 1 for the second, etc..., then 0 for the first day of Fall, 1 for the second, etc...). 
-
-Helps to answer [RQ.5](#rq.5) by showing if there is a significant linear relation between how long it's been a season and the number of rentals.
-
-## Predictors Cont.
-
-Interaction between `userType` and all other predictors
-
-This helps us see how registered users are affected by each other predictor compared to casual users
-
-
-## Methodology
-
-We also use `stepAIC` (bidirectional stepwise model selection using AIC) to determine if our model would have a better fit by ablating any predictors.
+- `temp`
+- `windspeed`
+- `hum`
+- `weathersit`
+- User Type - Indicator of if the number of rentals is taken from the `casual` or `registered` columns of the dataset (0 if `casual`, 1 if `registered`)
+- `season`
+- `workingday`
+- Day of season - The day of the season (e.g. 0 for the first day of Spring, 1 for the second, etc..., then 0 for the first day of Fall, 1 for the second, etc...)
+- Interaction between `userType` and all other predictors
 
 ## Results
 
@@ -182,20 +127,10 @@ We get fitted model:
 model = glm(rentals ~ (temp + windspeed + hum + weathersit + workingday + day_of_season + season)*user_type, bike_transformed, family = poisson())
 
 s = summary(model)
-s
+s$coefficients[, c("Estimate", "Pr(>|z|)")] |> round(digits = 4)
 ```
 
 Which is the same after running `stepAIC` (backwards + forwards stepwise AIC model selection) starting from the full model and from the null model.
-```{r, eval=FALSE}
-step_model_full = MASS::stepAIC(model, trace = 0, direction = "both")
-step_model_full
-```
-
-```{r, eval=FALSE}
-null_model = glm(rentals ~ 1, bike_transformed, family = poisson())
-step_model_null = MASS::stepAIC(null_model, trace = 0, scope = list(lower = null_model, upper = model, direction = "both"))
-step_model_null
-```
 
 ## Diagnostics
 
