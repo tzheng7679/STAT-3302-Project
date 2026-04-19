@@ -28,10 +28,6 @@ library(ggthemes) # for theme_clean
 bike = read_csv("data/hour.csv")
 ```
 
-## Abstract
-
-<!-- 2-3 sentence summary of your question, method, and key finding. -->
-
 ## Introduction
 
 <!-- Introduce the problem and your research question(s). Why is this
@@ -363,16 +359,24 @@ ggplot(pred_data, aes(x = user_type, y = predicted, fill = factor(workingday,
   theme_calc()
 ```
 
+## (RQ.4)
+
+```{r}
+ggplot(bike_transformed, aes(x = day_of_season, y = rentals, color = user_type)) +
+    geom_point(alpha = 0.1) +
+    labs(title = "# of Rentals vs. Day of Season") +
+    theme_clean()
+```
 
 ## (RQ.4)
 
-Our estimated `day_of_season` coefficients were statistically significant, since `day_of_season` and `day_of_season:user_typeregistered` had individual p-values of
+Our estimated `day_of_season` coefficients were statistically significant, with individual p-values
 ```{r}
 usertype_coefs = c("day_of_season", "day_of_season:user_typeregistered")
 s$coefficients[usertype_coefs, "Pr(>|z|)"]
 ```
 
-and a p-value when added together
+and adding both `day_of_season` and `day_of_season:user_typeregistered` to the model had p-value of 
 ```{r}
 no_day_of_season_model = glm(rentals ~ (temp + windspeed + hum + weathersit + workingday + season)*user_type, bike_transformed, family = poisson())
 
@@ -386,14 +390,17 @@ coef(model)[usertype_coefs]
 
 ## (RQ.4)
 
-These indicate that there was a significant positive relationship between the day of the season and bike rentals. Specifically, it is estimated that for every day that passed in a season, the estimated mean number of hourly casual bike rentals increased by a factor of 
 ```{r}
-coef(model)[["day_of_season"]] |> exp()
+casual_dos_coef = coef(model)[["day_of_season"]]
+reg_dos_coef = coef(model)[usertype_coefs] |> sum()
 ```
-and for registered users
-```{r}
-coef(model)[usertype_coefs] |> sum() |> exp()
-```
+
+There was a significant positive relationship: for every day that passed in a season, the estimated mean number of hourly casual bike rentals increased for by approx. factor of...
+
+
+$\exp( {`r casual_dos_coef |> format(digits = 5)`} ) \approx `r casual_dos_coef |> exp() |> signif(digits = 5)`$ for **casual users** 
+
+$\exp( {`r reg_dos_coef |> format(digits = 5)`} ) \approx `r reg_dos_coef |> exp() |> format(digits = 5)`$ for **registered users**
 
 ## Conclusion
 
@@ -405,12 +412,3 @@ Bike rentals are significantly associated with different climate/weather conditi
 - Increased for non-working days
 - Increased as a season went along (later parts of a season were associated with more rentals)
 :::
-
-## References
-
-<!-- Cite the data source and any articles or resources you used. -->
-
-## Appendix {.appendix}
-
-<!-- Optional: include additional code, tables, or figures here.
-This section does not count toward the page limit. -->
