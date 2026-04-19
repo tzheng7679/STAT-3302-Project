@@ -303,6 +303,50 @@ coef(model)[["workingday"]] |> exp()
 
 which means that approximately 58% less average rides are estimated on a workday compared to a non-workday.
 
+## (RQ.3) {auto-animate="true"}
+
+Weather conditions affect both groups of users, but casual users are substantially more sensitive to weather than registered users. We can look at the corresponding coefficients for casual users vs registered users for each of the weather-related terms. For registered users, this would be the casual user coefficient **plus** the interaction term for registered users:
+
+. . .
+
+Casual users:
+```{r}
+coef_names = names(coef(model))
+coef(model)[grepl("^(weathersit\\d|temp|hum|windspeed)$", coef_names)]
+```
+
+. . .
+
+Registered users
+```{r}
+coef(model)[grepl("^(weathersit\\d|temp|hum|windspeed)$", coef_names)] +
+coef(model)[grepl("^(weathersit\\d|temp|hum|windspeed):user_typeregistered", coef_names)]
+```
+
+## (RQ.3) {auto-animate="true"}
+
+Casual users:
+```{r}
+coef_names = names(coef(model))
+coef(model)[grepl("^(weathersit\\d|temp|hum|windspeed)$", coef_names)]
+```
+
+Registered users
+```{r}
+coef(model)[grepl("^(weathersit\\d|temp|hum|windspeed)$", coef_names)] +
+coef(model)[grepl("^(weathersit\\d|temp|hum|windspeed):user_typeregistered", coef_names)]
+```
+
+::::{.r-stack}
+::: {.fragment .fade-in-then-out}
+All of `temp`, `hum`, and `windspeed` (and their respective interaction terms with `user_type`) were statistically significant, with low p-values, which means that these observed relationships were significant. This was also true for each of the seasons and their interactions terms, except for the baseline coefficient for heavy precipitation (though its interaction term was significant).
+:::
+
+::: {.fragment .fade-in-then-out}
+Overall, causal users had strong sensitivity to temperature, humidity, and windspeed. Registered users are still affected by weather, but seems to be less affected, with the absolute value of each of their coefficients being smaller than the absolute value for casual users. Such a case is possibly due to more consistent baseline usage and behavior driven by necessity rather than comfort. 
+:::
+::::
+
 ## (RQ.5)
 
 Our estimated `day_of_season` coefficients were statistically significant, since `day_of_season` and `day_of_season:user_typeregistered` had individual p-values of

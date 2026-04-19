@@ -1,0 +1,55 @@
+---
+title: "Stat_3302_RQ3"
+format: html
+editor: visual
+---
+
+### (RQ.3)
+
+Does Weather affect casual users differently than registered users?
+
+```{r}
+model_casual <- lm(casual ~ temp + hum + windspeed + weathersit, data = bike)
+summary(model_casual)
+```
+
+```{r}
+model_registered <- lm(registered ~ temp + hum + windspeed + weathersit, data = bike)
+summary(model_registered)
+```
+
+```{r}
+plot(bike$temp, bike$casual, col = "red", main = "Temperature vs Users")
+points(bike$temp, bike$registered, col = "blue")
+legend("topleft", legend = c("Casual", "Registered"), col = c("red", "blue"), pch = 1)
+```
+
+```{r}
+plot(bike$temp, bike$casual,
+     col = rgb(1, 0, 0, alpha = 0.4),   # red with transparency
+     xlab = "Normalized Temperature",
+     ylab = "Number of Bike Rentals",
+     main = "Temperature vs Bike Rentals by User Type")
+
+points(bike$temp, bike$registered,
+       col = rgb(0, 0, 1, alpha = 0.4))  # blue with transparency
+
+legend("topleft",
+       legend = c("Casual", "Registered"),
+       col = c(rgb(1,0,0,0.4), rgb(0,0,1,0.4)),
+       pch = 1)
+```
+
+
+Main Findings: 
+  Weather conditions affect both groups of users, but casual users are substantially more sensitive to weather than registered users. 
+  Temperature effect is 112.74 for casual and 252.13 for registered. But this is because registered users tend to ride more overall so their baseline demand is higher. 
+  Humidity effect is -83.42 for casual and -198.45 for registered. 
+  Casual model had R^2 of 0.312 while Registered model had R^2 of 0.178. This means that weather explains far more variation in casual user behavior than registered user behavior. 
+  Wind speed was not significant (p = 0.348) for casual and was significant for registered users (p = 0.00856) but effect size is small for both cases.
+  
+Insights:
+  Causal users have strong sensitivity to temperature and humidity, and have lower R^2 stability differences. Registered users are still affected by weather but it seems to be less volatile. More consistent baseline usage and behavior driven by necessity rather than comfort. 
+  
+Conclusion:
+  Conducted a multiple linear regression analysis separately for casual and registered users to asses the impact of weather conditions on bike rental behavior. Based on the output, weather conditions significantly affect both user types but casual users are substantially more sensitive to environmental factors than registered users. Specifically, temperature and humidity are highly significant predictors for both groups, with higher temperatures increasing bike usage and higher humidity decreasing usage. The model for casual users explains a greater proportion of variation in rentals (R^2 = 0.312) compared to registered users (R^2 = 0.178). This shows that weather conditions are more influential for casual users. 

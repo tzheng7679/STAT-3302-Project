@@ -52,7 +52,7 @@ Does the temperature of a day affect the number of Bike Rentals after accounting
 Does the fact that it is a workday (not a weekend/holiday) affect the number of Bike Rentals after accounting for weather conditions (e.g. precipitation, humidity, temperature, and wind speed), and user type?
 
 #### (RQ.3)
-Do weather conditions affect the number of Bike Rentals among registered users vs. casual users?
+Do weather conditions affect the number of Bike Rentals differently between registered users vs. casual users?
 
 #### (RQ.4)
 Does the fact that it is a workday (or not) affect the number of Bike Rentals among registered users vs. casual users differently?
@@ -69,6 +69,32 @@ response variable, and key predictors. Include relevant summary
 statistics or exploratory plots. -->
 
 The bike sharing dataset was [@bike_sharing_275]
+
+```{r}
+# data manipulation
+
+# create UserType column
+bike_transformed = bike %>% 
+    pivot_longer( # split casual and registered users
+        c("casual", "registered"),
+        names_to = "user_type",
+        values_to = "rentals"
+    ) %>%
+    group_by(yr, consecutive_id(season)) %>%
+    mutate( # create day of season, create factors for weather/season
+        day_of_season = as.numeric(dteday - min(dteday)),
+        weathersit = factor(weathersit),
+        season = factor(season, levels = c(1, 2, 3, 4), labels = c("Spr", "Sum", "Aut", "Win"))
+    )
+```
+
+### Exploratory Plots
+```{r}
+ggplot(bike_transformed, aes(x = temp, y = rentals, color = user_type)) +
+    geom_point(alpha = 0.2) +
+    labs(x = "Normalized Temperature", y = "Rentals", title = "Temperature vs Bike Rentals by User Type") +
+    theme_clean()
+```
 
 ## Methods
 
@@ -124,24 +150,6 @@ We also use `stepAIC` (bidirectional stepwise model selection using AIC) to dete
 <!-- Present the fitted model, interpret key coefficients, and report
 any hypothesis tests or confidence intervals. Use tables and figures
 to support your findings. -->
-
-```{r}
-# data manipulation
-
-# create UserType column
-bike_transformed = bike %>% 
-    pivot_longer( # split casual and registered users
-        c("casual", "registered"),
-        names_to = "user_type",
-        values_to = "rentals"
-    ) %>%
-    group_by(yr, consecutive_id(season)) %>%
-    mutate( # create day of season, create factors for weather/season
-        day_of_season = as.numeric(dteday - min(dteday)),
-        weathersit = factor(weathersit),
-        season = factor(season, levels = c(1, 2, 3, 4), labels = c("Spr", "Sum", "Aut", "Win"))
-    )
-```
 
 We get fitted model:
 ```{r}
@@ -270,6 +278,36 @@ coef(model)[["workingday"]] |> exp()
 ```
 
 which means that approximately 58% less average rides are estimated on a workday compared to a non-workday.
+
+### (RQ.3)
+
+Does Weather affect casual users differently than registered users?
+
+Coefficient summary for all weather conditions:
+```{r}
+weather_coefs = c(grepl("weathersit|temp|windspeed|hum", names(coef(model))))
+s$coefficients[weather_coefs, c("Estimate", "Pr(>|z|)")]
+```
+
+Weather conditions affect both groups of users, but casual users are substantially more sensitive to weather than registered users. For example, the estimated mean rentals registered users are less affected by the temperature: the coefficient for temperature (i.e. the factor by which the estimated log mean number of rentals increases for unit of normalized temperature) for casual users is `r coef(model)[["temp"]] |> round(digits = 2)` vs. (`r  coef(model)[["temp"]] |> round(digits = 2)` + `r coef(model)[["temp:user_typeregistered"]] |> round(digits = 2)` = `r coef(model)[c("temp", "temp:user_typeregistered")] |> round(digits = 2) |> sum()`) for registered users.
+
+The same goes for humidity, with estimated casual humidity coefficient `r coef(model)[["hum"]] |> round(digits = 2)` vs. registered humidity coefficient (`r coef(model)[["hum"]] |> round(digits = 2)` + `r coef(model)[["hum:user_typeregistered"]] |> round(digits = 2)` = `r coef(model)[c("hum", "hum:user_typeregistered")] |> round(digits = 2) |> sum()`).
+
+For windspeed, the estimated casual coefficient was `r coef(model)[["windspeed"]] |> round(digits = 2)` vs. registered windspeedidity coefficient (`r coef(model)[["windspeed"]] |> round(digits = 2)` + `r coef(model)[["windspeed:user_typeregistered"]] |> round(digits = 2)` = `r coef(model)[c("windspeed", "windspeed:user_typeregistered")] |> round(digits = 2) |> sum()`).
+
+Finally, for precipitation, the casual coefficients were
+```{r}
+coef(model)[grepl("weathersit\\d$", names(coef(model)))]
+```
+
+versus
+```{r}
+coef(model)[grepl("weathersit\\d$)", names(coef(model)))] + coef(model)[grepl("weathersit\\d:user_typeregistered", names(coef(model)))]
+```
+
+All of `temp`, `hum`, and `windspeed` (and their respective interaction terms with `user_type`) were statistically significant, with low p-values, which means that these observed relationships were significant. This was also true for each of the seasons and their interactions terms, except for the baseline coefficient for heavy precipitation (though its interaction term was significant). This indicates that there was not a statistically significant difference in bike rentals among casual users between a heavy precipitation versus. clear day, though this could be due to high collinearity between such conditions and other weather conditions (like windspeed and humidity).
+
+Overall, causal users had strong sensitivity to temperature, humidity, and windspeed. Registered users are still affected by weather, but seems to be less affected, with the absolute value of each of their coefficients being smaller than the absolute value for casual users. Such a case is possibly due to more consistent baseline usage and behavior driven by necessity rather than comfort. 
 
 ### (RQ.5)
 
