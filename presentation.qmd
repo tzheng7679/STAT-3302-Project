@@ -55,31 +55,20 @@ included certain predictors, interactions, or polynomial terms). -->
 
 ## Model {auto-animate="true"}
 
-We fit model
 $$
 Y_i \sim \text{Poisson}(\lambda_i)
 $$
 
-where $Y_i$ is the observed number of bike rentals for the hour of the $i$-th observation. For each hour, there are two $Y$:
-
-- One for casual users
-- One for registered users
-
-And we have link function
-
 $$
 \log(\lambda_i) = X_i^T\beta
 $$
-
-## Model
 
 Then, $X_i \in \mathbb{R}^{(p+1) \times n}$ and $\beta \in \mathbb{R}^{p + 1}$, for $i \in \{1, 2, \dots, n\}$
 
 ::: {.incremental}
 - $n$ is the number of samples in the hour dataset times two (one for each registered count, one for casual)
 - $p$ is the total number of predictors we're including, with intercept term $\beta_0 = \beta_{0, i}$ for $\forall i$
-- $X_{i, 1} = 1$ for $\forall i$ 
-- and all other $X_{i, j}$ correspond to the value $j$-th predictor for observation $i$
+- $X_{i, 1} = 1$ for $\forall i$ and $X_{i, j}$ = $j$-th predictor for obs $i$
 :::
 
 ## Predictors {.smaller}
@@ -266,24 +255,11 @@ Overall, causal users had strong sensitivity to temperature, humidity, and wind 
 
 We want to know if workday status affects the bike rentals of casual and registered users differently.
 
-In our model, the effect of `workingday` on different users (`user_type`) and the interaction effect is captured by these terms: 
-
-To keep it concise let's use aliases for the parameter names for our fitted model. Let the main effects `wd = workingday`, `utr = user_typeregistered` and interaction effect `wd:utr = workin gday:user_typeregistered` :
-
-
 $$
 log(\lambda_i) = \cdots + \beta_{\text{wd}} \cdot \mathbf{1}[\text{wd}] + \beta_{\text{wd:utr}} \cdot \mathbf{1}[\text{wd}] \cdot \mathbf{1}[\text{utr}] + \beta_{utr} \cdot \mathbf{1}[\text{utr}]
 $$
 
-## (RQ.3) {auto-animate="true"}
-
-$$
-log(\lambda_i) = \cdots + \beta_{\text{wd}} \cdot \mathbf{1}[\text{wd}] + \beta_{\text{wd:utr}} \cdot \mathbf{1}[\text{wd}] \cdot \mathbf{1}[\text{utr}] + \beta_{utr} \cdot \mathbf{1}[\text{utr}]
-$$
-
-To answer our question we look at the interaction term $\beta_{\text{workingday:registered}}$  which captures this difference. The p-value generated for this interaction effect during model fit:
-
-\
+The estimates for this interaction effect coefficient during model fit:
 
 ```{r}
 #Get cofficient names
@@ -297,9 +273,6 @@ s$coefficients[coefs, c("Estimate", "Std. Error", "Pr(>|z|)")]
 ## (RQ.3) {auto-animate="true"}
 
 
-The interaction term `wd:utr` is statistically significant since (p < 0.05), suggesting that we enough evidence to reject the idea that the effect of whether it is a working day on Bike Rentals differs by user type considering everything other predictor is held at the same value.
-
-
 ```{r}
 #Get cofficient names
 coefs <- c("workingday", "workingday:user_typeregistered", "user_typeregistered")
@@ -307,10 +280,6 @@ coefs <- c("workingday", "workingday:user_typeregistered", "user_typeregistered"
 #p-values
 s$coefficients[coefs, c("Estimate", "Std. Error", "Pr(>|z|)")]
 ```
-
-## (RQ.3) {auto-animate="true"}
-
-We can confirm this by calculating the difference in Rentals for non-working/working days for different user type:
 
 ```{r}
 #Coeffs
@@ -328,27 +297,12 @@ $$
 \frac{\lambda_{wd,cas}}{\lambda_{nw,cas}} = exp\{ \beta_{wd}\} = 0.42
 $$
 
-
 $$
 \frac{\lambda_{wd,reg}}{\lambda_{nw,reg}} = exp\{ \beta_{wd} + \beta_{wd:utr} \} = 1.313
 $$
 
-## (RQ.3) {auto-animate="true"}
-
-$$
-\frac{\lambda_{wd,cas}}{\lambda_{nw,cas}} = exp\{ \beta_{wd}\} = 0.42
-$$
-
-
-$$
-\frac{\lambda_{wd,reg}}{\lambda_{nw,reg}} = exp\{ \beta_{wd} + \beta_{wd:utr} \} = 1.313
-$$
-
-On workdays, casual rentals are estimated to change by a factor of 0.42 while registered rentals change by a factor of 1.313 — these indicate a reversal in the direction of the change in the rate rentals.
 
 ## (RQ.3) {auto-animate="true"}
-
-We can visualize this difference by plotting the Estimated Hourly Rentals for different types of days for some median weather conditions (to hold those parameters constant)
 
 ```{r}
 # Predicted mean rentals at median weather conditions by user_type × working day
@@ -371,12 +325,26 @@ ggplot(pred_data, aes(x = user_type, y = predicted, fill = factor(workingday,
   geom_col(position = "dodge") +
   scale_fill_manual(values = c("#619CFF", "#F8766D"), name = "Day Type") +
   labs(
-    title    = "Estimated Mean Hourly Rentals: Workday vs Non-Workday",
+    title    = "Predicted Mean Hourly Rentals: Workday vs Non-Workday",
     subtitle = "At median weather conditions (Summer, weathersit = 1)",
     x        = "User Type",
     y        = "Predicted Mean Rentals"
   ) +
   theme_calc()
+```
+
+## (RQ.3) {auto-animate="true"}
+
+
+```{r}
+model_no_wday_interaction <- glm(
+  rentals ~ (temp + windspeed + hum + weathersit + day_of_season + season) * user_type 
+          + workingday + user_type,
+  bike_transformed, 
+  family = poisson()
+)
+
+anova(model_no_wday_interaction, model, test = "LRT")
 ```
 
 ## (RQ.4)
