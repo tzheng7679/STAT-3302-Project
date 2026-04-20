@@ -207,7 +207,9 @@ which means that approximately 58% less average rides are estimated on a workday
 
 ## (RQ.2)
 
-Weather conditions affect both groups of users, but casual users are substantially more sensitive to weather than registered users. We can look at the corresponding coefficients for casual users vs registered users for each of the weather-related terms. For registered users, this would be the casual user coefficient **plus** the interaction term for registered users:
+Want to know: do weather conditions affect casual vs registered riders differently?
+
+Weather Predictors Examined: temperature, humidity, wind speed, weather-situation. Also includes interactions between all predictors and `user_type`.
 
 ## (RQ.2)
 
@@ -218,29 +220,47 @@ ggplot(bike_transformed, aes(x = temp, y = rentals, color = user_type)) +
     theme_clean()
 ```
 
+## (RQ.2) {.smaller}
+
+```{r}
+library(kableExtra)
+model_summary <- summary(model)$coefficients
+weather_vars = c("temp", "hum", "windspeed", "weathersit2", "weathersit3", "weathersit4")
+casual_coefs      <- model_summary[weather_vars, "Estimate"]
+casual_pvals      <- model_summary[weather_vars, "Pr(>|z|)"]
+interaction_terms <- paste0(weather_vars, ":user_typeregistered")
+registered_coefs = model_summary[interaction_terms, "Estimate"]
+interaction_pvals <- model_summary[interaction_terms, "Pr(>|z|)"]
+
+weather_comparison <- data.frame(
+    Variable      = c("Temperature", "Wind Speed", "Humidity",
+                      "Weather: Cloudy/Mist", "Weather: Light Rain/Snow", "Weather: Heavy Rain/Snow"),
+    Casual        = round(casual_coefs, 3),
+    Registered    = round(registered_coefs, 3),
+    Difference    = round(registered_coefs - casual_coefs, 3),
+    P_Casual      = round(casual_pvals, 4),
+    P_Interaction = round(interaction_pvals, 4)
+)
+
+weather_comparison |>
+    kable(
+        col.names = c("Variable", "Casual", "Registered", "Difference", "p (Casual)", "p (Interaction)"),
+        caption   = "Weather Effects on Bike Rentals by User Type"
+    ) |>
+    kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE)
+```
+
 ## (RQ.2)
 
-Casual users:
-```{r}
-coef_names = names(coef(model))
-coef(model)[grepl("^(weathersit\\d|temp|hum|windspeed)$", coef_names)]
-```
-
-Registered users
-```{r}
-coef(model)[grepl("^(weathersit\\d|temp|hum|windspeed)$", coef_names)] +
-coef(model)[grepl("^(weathersit\\d|temp|hum|windspeed):user_typeregistered", coef_names)]
-```
-
-::::{.r-stack}
+::::: r-stack
 ::: {.fragment .fade-in-then-out}
-All of `temp`, `hum`, and `windspeed` (and their respective interaction terms with `user_type`) were statistically significant, with low p-values, which means that these observed relationships were significant. This was also true for each of the seasons and their interactions terms, except for the baseline coefficient for heavy precipitation (though its interaction term was significant).
+We can look at the corresponding coefficients for casual users vs registered users for each of the weather-related terms. For registered users, this would be the casual user coefficient plus the interaction term for registered users. All of `temp`, `hum`, and `windspeed` (and their respective interaction terms with `user_type`) were statistically significant, with low p-values, which means that these observed relationships were significant. This was also true for each of the seasons and their interactions terms, except for the baseline coefficient for heavy precipitation (though its interaction term was significant).
 :::
 
 ::: {.fragment .fade-in-then-out}
-Overall, causal users had strong sensitivity to temperature, humidity, and windspeed. Registered users are still affected by weather, but seems to be less affected, with the absolute value of each of their coefficients being smaller than the absolute value for casual users. Such a case is possibly due to more consistent baseline usage and behavior driven by necessity rather than comfort. 
+Overall, causal users had strong sensitivity to temperature, humidity, and wind speed. Registered users are still affected by weather, but seems to be less affected, with the absolute value of each of their coefficients being smaller than the absolute value for casual users. Such a case is possibly due to more consistent baseline usage and behavior driven by necessity rather than comfort.
 :::
-::::
+:::::
 
 ## (RQ.3) {auto-animate="true"}
 
