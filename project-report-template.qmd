@@ -416,7 +416,7 @@ p1 + p2 +
 
 This suggests that more registered users might use bike sharing more on workdays (for commute/exercise) while casual users might use the service for recreation on holidays/weekends.
 
-The Analysis of Deviance Table shows including the interaction term, including it reduces the residual deviance from the reduced model by 151,556, providing strong evidence that workday status affects casual and registered users differently. We can thus say that there is a practically meaningful difference in relationships registered/casual bike users have with working days.
+The Analysis of Deviance Table (provided in the appendix), shows that including the interaction reduces the residual deviance from the reduced model by 151,556, providing strong evidence that workday status affects casual and registered users differently. We can thus say that there is a practically meaningful difference in relationships registered/casual bike users have with working days.
 
 ### (RQ.4)
 
