@@ -38,14 +38,14 @@ bike = read_csv("data/hour.csv")
 
 <!-- 2-3 sentence summary of your question, method, and key finding. -->
 
-There are many factors that depend why someone would use a bike-sharing service, including, but not limited to, time of the day, the season, current weather conditions, and registration status. We believe that it is of interest to see which factors impact bike rental numbers the most, specifically looking at whether or not it is a workday, the weather conditions, and the season, also breaking down the response into registered users who pay a subscription to the service and casual users who are picking one up on a one-time basis. By fitting a Poisson regression model with a log-rate link function, our results showed the following: users typically ride on non-working days overall, but registered users are more likely to ride on workdays; registered users are typically affected less by weather; and the progression of a season does not typically result with an increase of total riders.
+There are many factors that depend why someone would use a bike-sharing service. We believe that it is of interest to see which factors impact bike rental numbers the most, specifically looking at whether or not it is a workday, the weather conditions, and the season, also breaking down the response into registered users who pay a subscription to the service and casual users who are picking one up on a one-time basis. We fit a Poisson regression model with a log-rate link function, with the following findings: users typically ride on non-working days overall, but registered users are more likely to ride on workdays; registered users are typically affected less by weather; and the progression of a season does not typically result with an increase of total riders.
 
 ## Introduction
 
 <!-- Introduce the problem and your research question(s). Why is this
 question interesting or important? -->
 
-Bike rentals vary from day-to-day depending on various weather, temporal, and user conditions. By analyzing which conditions have the greatest effect on the estimated number of rentals, we can find what conditions have an impact or don't, and how these impacts interact with each other. As such, we ask the following questions:
+Bike rentals vary from day-to-day depending on various weather, temporal, and user conditions. By analyzing which conditions have the greatest effect on the estimated number of rentals, we can find what conditions have an impact or don't, and how these impacts interact with each other.
 
 #### (RQ.1)
 Does the fact that it is a workday (not a weekend/holiday) affect the number of Bike Rentals?
@@ -59,7 +59,6 @@ Does the fact that it is a workday (or not) affect the number of Bike Rentals am
 #### (RQ.4)
 Do the number of rentals change through a season (e.g. do rentals taper off as a season progresses)?
 
-These questions address individual bike rental conditions and the way user they interact between each other (if one condition occurring cancels out another or strengthens its effect).
 
 ## Data
 
@@ -67,31 +66,29 @@ These questions address individual bike rental conditions and the way user they 
 response variable, and key predictors. Include relevant summary
 statistics or exploratory plots. -->
 
-The Bike Sharing dataset was sourced from [@bike_sharing_275]. It contains the daily and hourly counts of bike rentals in the Capital bike-share system in 2011 and 2012, augmented with weather and temporal information.
-
-We use the hourly dataset; it contains a total of `r nrow(bike)` counts.
+The Bike Sharing dataset was sourced from [@bike_sharing_275]. It contains the daily and hourly counts of bike rentals in the Capital bike-share system in 2011 and 2012, augmented with weather and temporal information. We use the hourly dataset; it contains a total of `r nrow(bike)` counts.
 
 ### Predictors
 
-Dataset predictors we used are described below
+Dataset predictors used in model fitting: (check appendix for expanded details)
 
 | Predictor | Description |
 | -- | ------ |
-| `temp` | The normalized temperature of the hour (unitless), in $\left[0, 1\right]$. Found by taking the temperature in $C^{\circ}$ and dividing by 41 |
-| `windspeed` | The normalized windspeed of a day (unitless), in $\left[0, 1\right]$. Found by taking the windspeed of the hour (unit is unstated in dataset) and dividing by 41 |
-| `hum` | The normalized humidity (unitless), in $\left[0, 1\right]$; taken from original humidity and then dividing by 100 |
-| `weathersit` | Factor representing the amount of precipitation/cloud cover. In $\{1, 2, 3, 4\}$, where <br> **1:** Clear, Few clouds, Partly cloudy, Partly cloudy <br> **2:** Mist + Cloudy, Mist + Broken clouds, Mist + Few clouds, Mist <br> **3:** Light Snow, Light Rain + Thunderstorm + Scattered clouds, Light Rain + Scattered clouds <br> **4:** Heavy Rain + Ice Pallets + Thunderstorm + Mist, Snow + Fog |
-| `season` | Indicator for what season it is. In the data, is an integer from 1-4, where 1 is Spring, 2 Summer, 3 Fall, and 4 Winter. For our model, we transform it into categorical data where `Spr` is for Spring, `Sum` is for Summer, `Aut` is for Fall, and `Win` is for Winter |
+| `temp` | The normalized temperature of the hour (unitless), in $\left[0, 1\right]$ |
+| `windspeed` | The normalized windspeed of a day (unitless), in $\left[0, 1\right]$ |
+| `hum` | The normalized humidity (unitless), in $\left[0, 1\right]$|
+| `weathersit` | Factor representing the amount/degree of precipitation/cloud cover |
+| `season` | Indicator for Season |
 | `workingday`| Indicator of if day was a workday or not (1 if workday, 0 if not) |
 
 ### Created Predictors
 
-We also create new predictors from the dataset, described below
+New predictors from the dataset, for model fit:
 
 | Predictor | Description |
 | -- | ------ |
-| `user_type` | Indicator of if the number of rentals is taken from the `casual` or `registered` columns of the dataset (0 if `casual`, 1 if `registered`). We reshaped the data to be longer: instead of each row containing both a casual and registered count, we separated them out into two rows, with the casual row having `user_type` = 0, and 1 for the registered row |
-| Day of season | The day of the season (e.g. 0 for the first day of Spring, 1 for the second, etc..., then 0 for the first day of Fall, 1 for the second, etc...). |
+| `user_type` | Indicator of if the number of rentals is taken from the `casual` or `registered` columns of the dataset (0 if `casual`, 1 if `registered`) |
+| Day of season | The day of the season (e.g. 0 for the first day of Spring) |
 
 ```{r}
 # data manipulation
@@ -113,13 +110,13 @@ bike_transformed = bike %>%
 
 Our modified dataset then contains `r nrow(bike_transformed)` counts (i.e. double that of the original, since each row gets split into two).
 
-### Exploratory Plots
+Our model also includes the interaction term between all those described in [Predictors](#predictors) and `userType`. This is done to see how registered users are affected by each other predictor compared to casual users.
 
-We look at exploratory plots relevant to each of our research questions
+### Exploratory Plots
 
 #### By `workday`
 
-We can look at how [RQ.1](#rq.1) and [RQ.3](#rq.3) might be answered by plotting `workingday` against the rental counts, faceted by both `user_type` and `workingday`. We plot the proportion of counts accounted for by each bin of rentals in each group to see how the distribution itself changes, without it being affected by the total amount of counts in each group.
+We can look at how [RQ.1](#rq.1) and [RQ.3](#rq.3) by plotting `workingday` against the rental counts, faceted by both `user_type` and `workingday`. We plot the proportion of counts accounted for by each bin of rentals in each group to see how the distribution itself changes, without it being affected by the total amount of counts in each group.
 
 ```{r}
 ggplot(bike_transformed, aes(x = rentals)) +
@@ -132,7 +129,6 @@ ggplot(bike_transformed, aes(x = rentals)) +
 It seems that we generally see a significant change in rentals on working days, but this association is **reversed** for registered users. Casual users tend to see higher rental counts on *non-working* days, but registered users tend to see higher rental counts on *working* days. This suggests that the answer to [RQ.3](#rq.3) might be that registered and casual users **are** affected by working days differently.
 
 #### By `user_type`
-To explore [RQ.2](#rq.2) We can first explore how bike rentals vary by `user_type`.
 
 ```{r}
 ggplot(bike_transformed, aes(x = rentals)) +
@@ -183,27 +179,22 @@ $$
 Y_i \sim \text{Poisson}(\lambda_i)
 $$
 
-with link function
+with the log-rate link function
 $$
 \log(\lambda_i) = X_i^T\beta
 $$
 
 for $i \in \{1, 2, \dots, n\}$.
 
-$Y_i$ is the observed number of bike rentals for the hour of the $i$-th observation. For each hour, there are two $Y$:
+$Y_i$ is the observed number of bike rentals for the hour of the $i$-th observation. For each hour, there are two $Y$ based on the type of user (registered/casual).
 
-- One for casual users
-- One for registered users
+Then, $X_i \in \mathbb{R}^{(p+1)}$ and $\beta \in \mathbb{R}^{p + 1}$, where:
 
-Then, $X_i \in \mathbb{R}^{(p+1) \times n}$ and $\beta \in \mathbb{R}^{p + 1}$, where
-- $n$ is the number of samples in the **hour dataset** times two (one for each registered count, one for casual)
-- $p$ is the total number of predictors we're including, with intercept term $\beta_0 = \beta_{0, i}$ for $\forall i$
-- $X_{i, 1} = 1$ for $\forall i$ 
-- and all other $X_{i, j}$ correspond to the value $j$-th predictor for observation $i$ $i \in {1, 2, \dots, n}$.
+- $n$ is the number of samples in the **hour dataset** times two (for each type of user)
 
-### Predictors
+- $p$ is the total number of predictors we're including
 
-Our model includes all those described in [Predictors](#predictors), along with an interaction between `userType` and each of those predictors. This is done to see how registered users are affected by each other predictor compared to casual users.
+- $X_{i, j}$ correspond to the value $j$-th predictor for observation $i$, where $X_{i,1}=1$ for all $i$
 
 We also use `stepAIC` (bidirectional stepwise model selection using AIC) to determine if our model would have a better fit by ablating any predictors.
 
@@ -347,10 +338,6 @@ Overall, causal users had strong sensitivity to temperature, humidity, and winds
 
 We want to know if workday status affects the bike rentals of casual and registered users differently.
 
-$$
-log(\lambda_i) = \cdots + \beta_{\text{wd}} \cdot \mathbf{1}[\text{wd}] + \beta_{\text{wd:utr}} \cdot \mathbf{1}[\text{wd}] \cdot \mathbf{1}[\text{utr}] + \beta_{utr} \cdot \mathbf{1}[\text{utr}]
-$$
-
 The estimates for this interaction effect coefficient during model fit:
 
 ```{r}
@@ -359,17 +346,7 @@ coefs <- c("workingday", "workingday:user_typeregistered", "user_typeregistered"
 
 #p-values
 s$coefficients[coefs, c("Estimate", "Std. Error", "Pr(>|z|)")]
-```
 
-```{r}
-#Get cofficient names
-coefs <- c("workingday", "workingday:user_typeregistered", "user_typeregistered")
-
-#p-values
-s$coefficients[coefs, c("Estimate", "Std. Error", "Pr(>|z|)")]
-```
-
-```{r}
 #Coeffs
 wday_coefs <- c("workingday", "workingday:user_typeregistered")
 
@@ -381,53 +358,65 @@ cat("Casual Multiplicative Difference in Rentals for Workingday:   ", round(casu
 cat("Registered Multiplicative Difference in Rentals for Workingday:", round(registered_mult, 3), "\n")
 ```
 
-$$
-\frac{\lambda_{wd,cas}}{\lambda_{nw,cas}} = exp\{ \beta_{wd}\} = 0.42
-$$
-
-$$
-\frac{\lambda_{wd,reg}}{\lambda_{nw,reg}} = exp\{ \beta_{wd} + \beta_{wd:utr} \} = 1.313
-$$
+We illustrate the multiplicative difference in rentals between Working and non-Working days for Casual and Registered users above. We visualize this below: 
 
 ```{r}
-# Predicted mean rentals at median weather conditions by user_type × working day
+library(patchwork)
+
+# --- Shared prediction data (your existing code, unchanged) ---
 pred_data <- bike_transformed |>
   ungroup() |>
   group_by(user_type, workingday) |>
   summarise(
-    temp       = median(temp),
-    windspeed  = median(windspeed),
-    hum        = median(hum),
-    weathersit = factor(1, levels = levels(weathersit)),
-    season     = factor("Sum", levels = levels(season)),
+    temp          = median(temp),
+    windspeed     = median(windspeed),
+    hum           = median(hum),
+    weathersit    = factor(1, levels = levels(weathersit)),
+    season        = factor("Sum", levels = levels(season)),
     day_of_season = median(day_of_season),
     .groups = "drop"
   ) |>
-  mutate(predicted = predict(model, newdata = pick(everything()), type = "response"))
+  mutate(
+    predicted = predict(model, newdata = pick(everything()), type = "response"),
+    day_label = factor(workingday, labels = c("Non-Workday", "Workday"))
+  )
 
-ggplot(pred_data, aes(x = user_type, y = predicted, fill = factor(workingday,
-       labels = c("Non-Workday", "Workday")))) +
+# --- Plot 1: Your existing bar chart ---
+p1 <- ggplot(pred_data, aes(x = user_type, y = predicted, fill = day_label)) +
   geom_col(position = "dodge") +
   scale_fill_manual(values = c("#619CFF", "#F8766D"), name = "Day Type") +
   labs(
-    title    = "Predicted Mean Hourly Rentals: Workday vs Non-Workday",
-    subtitle = "At median weather conditions (Summer, weathersit = 1)",
+    title    = "Predicted Mean Hourly Rentals",
+    subtitle = "Bar chart",
     x        = "User Type",
     y        = "Predicted Mean Rentals"
   ) +
   theme_calc()
+
+# --- Plot 2: Interaction plot ---
+p2 <- ggplot(pred_data, aes(x = day_label, y = predicted,
+                             color = user_type, group = user_type)) +
+  geom_point(size = 4) +
+  geom_line(linewidth = 1) +
+  scale_color_manual(values = c("casual" = "#F8766D", "registered" = "#619CFF"),
+                     name = "User Type") +
+  labs(
+    title    = "Interaction: Workday × User Type",
+    subtitle = "Crossing lines show reversed effect",
+    x        = "Day Type",
+    y        = "Predicted Mean Rentals"
+  ) +
+  theme_calc()
+
+# --- Combined ---
+p1 + p2 +
+  plot_layout(guides = "collect") &
+  theme(legend.position = "bottom")
 ```
 
-```{r}
-model_no_wday_interaction <- glm(
-  rentals ~ (temp + windspeed + hum + weathersit + day_of_season + season) * user_type 
-          + workingday + user_type,
-  bike_transformed, 
-  family = poisson()
-)
+This suggests that more registered users might use bike sharing more on workdays (for commute/exercise) while casual users might use the service for recreation on holidays/weekends.
 
-anova(model_no_wday_interaction, model, test = "LRT")
-```
+The Analysis of Deviance Table shows including the interaction term, including it reduces the residual deviance from the reduced model by 151,556, providing strong evidence that workday status affects casual and registered users differently. We can thus say that there is a practically meaningful difference in relationships registered/casual bike users have with working days.
 
 ### (RQ.4)
 
@@ -478,6 +467,15 @@ In addition, registered users tended to behave differently from casual users, wi
 
 We hypothesized that bike rentals increased as a season went along (later parts of a season were associated with more rentals), but we decide that there isn't a significant relationship.
 
+## Limitations
+
+- Poisson regression assumes mean equals variance, but our residual deviance of 2,177,102 on 34,734 degrees of freedom suggests substantial over dispersion. A negative binomial/quasi-Poisson model may thus be worth exploring in this case.
+
+- The diagnostic plots reveal the model systematically overestimates rentals at high counts, suggesting the linear predictor may not fully capture extreme values. Which might suggest that a transform on one of predictors might be suitable. 
+
+- Hours within the same day are likely correlated (Temporal dependence), violating the independence assumption of Poisson regression. Addressing this would require models that address the time series nature of the data.
+
+
 ## References
 
 <!-- Cite the data source and any articles or resources you used. -->
@@ -496,3 +494,38 @@ The model was fit using
 #| code-overflow: wrap
 ```
 
+
+Analysis of Deviance Table (to check if the Interaction effect between Working day and User Type)
+
+```{r}
+#| code-overflow: wrap
+model_no_wday_interaction <- glm(
+  rentals ~ (temp + windspeed + hum + weathersit + day_of_season + season) * user_type 
+          + workingday + user_type,
+  bike_transformed, 
+  family = poisson()
+)
+
+anova(model_no_wday_interaction, model, test = "LRT")
+```
+
+
+Expanded Predictor Information
+
+Dataset predictors we used are described below
+
+| Predictor | Description |
+| -- | ------ |
+| `temp` | The normalized temperature of the hour (unitless), in $\left[0, 1\right]$. Found by taking the temperature in $C^{\circ}$ and dividing by 41 |
+| `windspeed` | The normalized windspeed of a day (unitless), in $\left[0, 1\right]$. Found by taking the windspeed of the hour (unit is unstated in dataset) and dividing by 41 |
+| `hum` | The normalized humidity (unitless), in $\left[0, 1\right]$; taken from original humidity and then dividing by 100 |
+| `weathersit` | Factor representing the amount of precipitation/cloud cover. In $\{1, 2, 3, 4\}$, where <br> **1:** Clear, Few clouds, Partly cloudy, Partly cloudy <br> **2:** Mist + Cloudy, Mist + Broken clouds, Mist + Few clouds, Mist <br> **3:** Light Snow, Light Rain + Thunderstorm + Scattered clouds, Light Rain + Scattered clouds <br> **4:** Heavy Rain + Ice Pallets + Thunderstorm + Mist, Snow + Fog |
+| `season` | Indicator for what season it is. In the data, is an integer from 1-4, where 1 is Spring, 2 Summer, 3 Fall, and 4 Winter. For our model, we transform it into categorical data where `Spr` is for Spring, `Sum` is for Summer, `Aut` is for Fall, and `Win` is for Winter |
+| `workingday`| Indicator of if day was a workday or not (1 if workday, 0 if not) |
+
+We also create new predictors from the dataset, described below
+
+| Predictor | Description |
+| -- | ------ |
+| `user_type` | Indicator of if the number of rentals is taken from the `casual` or `registered` columns of the dataset (0 if `casual`, 1 if `registered`). We reshaped the data to be longer: instead of each row containing both a casual and registered count, we separated them out into two rows, with the casual row having `user_type` = 0, and 1 for the registered row |
+| Day of season | The day of the season (e.g. 0 for the first day of Spring, 1 for the second, etc..., then 0 for the first day of Fall, 1 for the second, etc...). |
