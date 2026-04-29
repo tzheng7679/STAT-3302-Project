@@ -186,7 +186,7 @@ $$
 
 for $i \in \{1, 2, \dots, n\}$.
 
-$Y_i$ is the observed number of bike rentals for the hour of the $i$-th observation. For each hour, there are two $Y$ based on the type of user (registered/casual).
+$Y_i$ is the independent observed number of bike rentals for the hour of the $i$-th observation. For each hour, there are two $Y$ based on the type of user (registered/casual).
 
 Then, $X_i \in \mathbb{R}^{(p+1)}$ and $\beta \in \mathbb{R}^{p + 1}$, where:
 
@@ -469,12 +469,7 @@ We hypothesized that bike rentals increased as a season went along (later parts 
 
 ## Limitations
 
-- Poisson regression assumes mean equals variance, but our residual deviance of 2,177,102 on 34,734 degrees of freedom suggests substantial over dispersion. A negative binomial/quasi-Poisson model may thus be worth exploring in this case.
-
-- The diagnostic plots reveal the model systematically overestimates rentals at high counts, suggesting the linear predictor may not fully capture extreme values. Which might suggest that a transform on one of predictors might be suitable. 
-
-- Hours within the same day are likely correlated (Temporal dependence), violating the independence assumption of Poisson regression. Addressing this would require models that address the time series nature of the data.
-
+Our residual deviance suggests substantial over-dispersion (which violates our mean equals variance assumption for Poisson Regression), thus models like Quasi-Poisson models may be worth exploring. Our diagnostics also show the model overestimating at high rental counts, which could be fixed by applying a relevant transform to one of our predictors. Finally, hours within the same day can be temporally dependent and correlated, violating our independence assumption; this can be solved with models meant to address time-series data.
 
 ## References
 

@@ -2581,7 +2581,7 @@ Y_i \sim \text{Poisson}(\lambda_i)
 \log(\lambda_i) = X_i^T\beta
 \]</span></p>
 <p>for <span class="math inline">\(i \in \{1, 2, \dots, n\}\)</span>.</p>
-<p><span class="math inline">\(Y_i\)</span> is the observed number of bike rentals for the hour of the <span class="math inline">\(i\)</span>-th observation. For each hour, there are two <span class="math inline">\(Y\)</span> based on the type of user (registered/casual).</p>
+<p><span class="math inline">\(Y_i\)</span> is the independent observed number of bike rentals for the hour of the <span class="math inline">\(i\)</span>-th observation. For each hour, there are two <span class="math inline">\(Y\)</span> based on the type of user (registered/casual).</p>
 <p>Then, <span class="math inline">\(X_i \in \mathbb{R}^{(p+1)}\)</span> and <span class="math inline">\(\beta \in \mathbb{R}^{p + 1}\)</span>, where:</p>
 <ul>
 <li><p><span class="math inline">\(n\)</span> is the number of samples in the <strong>hour dataset</strong> times two (for each type of user)</p></li>
@@ -2830,11 +2830,7 @@ user_typeregistered             1.4163179 0.009352376        0</code></pre>
 </section>
 <section id="limitations" class="level2">
 <h2 class="anchored" data-anchor-id="limitations">Limitations</h2>
-<ul>
-<li><p>Poisson regression assumes mean equals variance, but our residual deviance of 2,177,102 on 34,734 degrees of freedom suggests substantial over dispersion. A negative binomial/quasi-Poisson model may thus be worth exploring in this case.</p></li>
-<li><p>The diagnostic plots reveal the model systematically overestimates rentals at high counts, suggesting the linear predictor may not fully capture extreme values. Which might suggest that a transform on one of predictors might be suitable.</p></li>
-<li><p>Hours within the same day are likely correlated (Temporal dependence), violating the independence assumption of Poisson regression. Addressing this would require models that address the time series nature of the data.</p></li>
-</ul>
+<p>Our residual deviance suggests substantial over-dispersion (which violates our mean equals variance assumption for Poisson Regression), thus models like Quasi-Poisson models may be worth exploring. Our diagnostics also show the model overestimating at high rental counts, which could be fixed by applying a relevant transform to one of our predictors. Finally, hours within the same day can be temporally dependent and correlated, violating our independence assumption; this can be solved with models meant to address time-series data.</p>
 </section>
 <section id="references" class="level2">
 <h2 class="anchored" data-anchor-id="references">References</h2>
