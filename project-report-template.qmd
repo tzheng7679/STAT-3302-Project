@@ -12,10 +12,7 @@ date: today
 format:
   html:
     embed-resources: true
-  pdf:
-    geometry:
-      - margin=1in
-    fontsize: 11pt
+    toc: true
 bibliography: dataset.bib
 execute:
   echo: false
@@ -38,7 +35,7 @@ bike = read_csv("data/hour.csv")
 
 <!-- 2-3 sentence summary of your question, method, and key finding. -->
 
-There are many factors that depend why someone would use a bike-sharing service. We believe that it is of interest to see which factors impact bike rental numbers the most, specifically looking at whether or not it is a workday, the weather conditions, and the season, also breaking down the response into registered users who pay a subscription to the service and casual users who are picking one up on a one-time basis. We fit a Poisson regression model with a log-rate link function, with the following findings: users typically ride on non-working days overall, but registered users are more likely to ride on workdays; registered users are typically affected less by weather; and the progression of a season does not typically result with an increase of total riders.
+There are many factors that determine why someone would use a bike-sharing service. We are interested in seeing what factors impact hourly bike rental numbers: we look at the effect of whether it is a workday, the weather conditions, and the season, and the difference of each's effect on registered users - who pay a subscription to the service - and casual users - who rent on a one-time basis. We fit a Poisson regression model with a log-rate link function, with findings: users typically ride on non-working days overall, but registered users are more likely to ride on workdays; registered users are typically affected less by weather; and the progression of a season does not result in a significant change in rentals.
 
 ## Introduction
 
